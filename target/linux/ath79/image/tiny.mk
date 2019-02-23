@@ -78,6 +78,14 @@ define Device/nec_wg300hp
 endef
 TARGET_DEVICES += nec_wg300hp
 
+define Device/nec_wr8175n
+  $(Device/nec-netbsd-aterm)
+  SOC := ar9341
+  DEVICE_MODEL := Aterm WR8175N
+  IMAGE_SIZE := 3840k
+endef
+TARGET_DEVICES += nec_wr8175n
+
 define Device/pqi_air-pen
   SOC := ar9330
   DEVICE_VENDOR := PQI

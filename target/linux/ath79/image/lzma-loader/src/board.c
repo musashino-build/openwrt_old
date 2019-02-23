@@ -51,6 +51,7 @@ static inline void tlwr1043nd_init(void) {}
 #endif
 
 #if defined(CONFIG_BOARD_NEC_WG300HP) || \
+    defined(CONFIG_BOARD_NEC_WR8175N) || \
     defined(CONFIG_BOARD_NEC_WR8750N)
 static void nec_init(void)
 {
