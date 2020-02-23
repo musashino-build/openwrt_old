@@ -532,6 +532,16 @@ define Device/tplink_tl-mr6400-v1
 endef
 TARGET_DEVICES += tplink_tl-mr6400-v1
 
+define Device/tplink_tl-r600vpn-v4
+  IMAGE_SIZE := 13248k
+  SOC := qca9563
+  DEVICE_VENDOR := TP-Link
+  DEVICE_MODEL := TL-R600VPN
+  DEVICE_VARIANT := v4
+  DEVICE_PACKAGES := -iwinfo -kmod-ath9k -wpad-basic
+endef
+TARGET_DEVICES += tplink_tl-r600vpn-v4
+
 define Device/tplink_tl-wa1201-v2
   $(Device/tplink-safeloader-uimage)
   SOC := qca9563
