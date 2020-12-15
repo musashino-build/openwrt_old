@@ -1,0 +1,26 @@
+--- a/drivers/misc/Kconfig
++++ b/drivers/misc/Kconfig
+@@ -466,6 +466,16 @@
+ 	  a paravirtualized device provided by QEMU; it lets a virtual machine
+ 	  (guest) communicate panic events to the host.
+ 
++config MCU_I2C
++	tristate "MCU I2C bus connection"
++	depends on I2C
++	default y
++	---help---
++	  Say Y here if you have a digital potentiometers hooked to an I2C bus.
++
++	  To compile this driver as a module, choose M here: the
++	  module will be called mcu-i2c.
++
+ source "drivers/misc/c2port/Kconfig"
+ source "drivers/misc/eeprom/Kconfig"
+ source "drivers/misc/cb710/Kconfig"
+--- a/drivers/misc/Makefile
++++ b/drivers/misc/Makefile
+@@ -57,3 +57,4 @@
+ obj-$(CONFIG_PVPANIC)   	+= pvpanic.o
+ obj-$(CONFIG_HABANA_AI)		+= habanalabs/
+ obj-$(CONFIG_XILINX_SDFEC)	+= xilinx_sdfec.o
++obj-$(CONFIG_MCU_I2C)		+= mcu-i2c.o
