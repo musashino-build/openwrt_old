@@ -25,6 +25,8 @@ caldata_extract() {
 	local mtd
 
 	mtd=$(find_mtd_chardev $part)
+	[ -n "$mtd" ] || \
+		mtd=$(find_mmc_part $part)
 	[ -n "$mtd" ] || caldata_die "no mtd device found for partition $part"
 
 	caldata_dd $mtd /lib/firmware/$FIRMWARE $count $offset || \
