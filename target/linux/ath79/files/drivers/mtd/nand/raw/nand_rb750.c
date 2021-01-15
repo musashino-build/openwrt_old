@@ -21,7 +21,7 @@
 #define DRV_DESC	"NAND flash driver for the MikroTik RouterBOARD 750"
 
 #define RB750_NAND_DATA_LINES	8
-#define RB750_NAND_DATA_MASK	1
+#define RB750_NAND_LINE_MASK	1
 
 struct rb750_nand {
 	struct device *dev;
@@ -105,31 +105,16 @@ static const struct mtd_ooblayout_ops rb750_nand_ecclayout_ops = {
 	.ecc = rb750_ooblayout_ecc,
 	.free = rb750_ooblayout_free,
 };
-/*
-static struct mtd_partition rb750_nand_partitions[] = {
-	{
-		.name	= "booter",
-		.offset	= 0,
-		.size	= (256 * 1024),
-		.mask_flags = MTD_WRITEABLE,
-	}, {
-		.name	= "kernel",
-		.offset	= (256 * 1024),
-		.size	= (4 * 1024 * 1024) - (256 * 1024),
-	}, {
-		.name	= "ubi",
-		.offset	= MTDPART_OFS_NXTBLK,
-		.size	= MTDPART_SIZ_FULL,
-	},
-};*/
 
 static void rb750_nand_write(struct nand_chip *chip, const u8 *buf, unsigned len)
 {
 	struct rb750_nand *nand = chip->priv;
+	struct gpio_desc **dgpio_p;
 	unsigned i, j;
+	u32 mask;
 
 	/* set data lines to output mode */
-	struct gpio_desc **dgpio_p = &nand->dgpio;
+	dgpio_p = &nand->dgpio->io0;
 	for (i = 0; i < RB750_NAND_DATA_LINES; i++) {
 		gpiod_direction_output(*dgpio_p, 0);
 		dgpio_p++;
@@ -144,10 +129,11 @@ static void rb750_nand_write(struct nand_chip *chip, const u8 *buf, unsigned len
 		/* activate WE line (LOW) */
 		gpiod_set_value_cansleep(nand->nwe, 0);
 
-		dgpio_p = &nand->dgpio;
+		dgpio_p = &nand->dgpio->io0;
 		for (j = 0; j < RB750_NAND_DATA_LINES; j++) {
-			gpiod_set_value_cansleep(*dgpio_p,
-				!!(data && (RB750_NAND_DATA_MASK << j)))
+			mask = RB750_NAND_LINE_MASK << j;
+
+			gpiod_set_value_cansleep(*dgpio_p, !!(data && mask));
 			dgpio_p++;
 		}
 
@@ -156,7 +142,7 @@ static void rb750_nand_write(struct nand_chip *chip, const u8 *buf, unsigned len
 	}
 
 	/* set data lines to input mode */
-	dgpio_p = &nand->dgpio;
+	dgpio_p = &nand->dgpio->io0;
 	for (i = 0; i < RB750_NAND_DATA_LINES; i++) {
 		gpiod_direction_input(*dgpio_p);
 		dgpio_p++;
@@ -166,6 +152,7 @@ static void rb750_nand_write(struct nand_chip *chip, const u8 *buf, unsigned len
 static void rb750_nand_read(struct nand_chip *chip, u8 *read_buf, unsigned len)
 {
 	struct rb750_nand *nand = chip->priv;
+	struct gpio_desc **dgpio_p;
 	unsigned i, j;
 
 	for (i = 0; i < len; i++) {
@@ -175,7 +162,7 @@ static void rb750_nand_read(struct nand_chip *chip, u8 *read_buf, unsigned len)
 		gpiod_set_value_cansleep(nand->nre, 0);
 
 		/* read input lines */
-		struct gpio_desc **dgpio_p = &nand->dgpio;
+		dgpio_p = &nand->dgpio->io0;
 		for (j = 0; j < RB750_NAND_DATA_LINES; j++) {
 			data |= gpiod_get_value_cansleep(*dgpio_p)
 				<< j;
@@ -196,7 +183,7 @@ static void rb750_nand_select_chip(struct nand_chip *chip, int cs)
 
 	if (cs >= 0) {
 		/* set input mode for data lines */
-		struct gpio_desc **dgpio_p = &nand->dgpio;
+		struct gpio_desc **dgpio_p = &nand->dgpio->io0;
 		for (i = 0; i < RB750_NAND_DATA_LINES; i++) {
 			gpiod_direction_input(*dgpio_p);
 			dgpio_p++;
@@ -235,8 +222,10 @@ static void rb750_nand_cmd_ctrl(struct nand_chip *chip, int cmd,
 		gpiod_set_value_cansleep(nand->ale, !!(ctrl & NAND_ALE));
 	}
 
-	if (cmd != NAND_CMD_NONE)
-		rb750_nand_write(&cmd, 1);
+	if (cmd != NAND_CMD_NONE) {
+		u8 t = cmd;
+		rb750_nand_write(chip, &t, 1);
+	}
 }
 
 static u8 rb750_nand_read_byte(struct nand_chip *chip)
@@ -261,7 +250,9 @@ static int rb750_nand_probe(struct platform_device *pdev)
 	struct device *dev = &pdev->dev;
 	struct rb750_nand *nand;
 	struct mtd_info *mtd;
+	struct gpio_desc **dgpio_p;
 	int ret, i;
+	char line_name[32];
 
 	dev_info(dev, DRV_DESC " version " DRV_VERSION "\n");
 
@@ -273,23 +264,22 @@ static int rb750_nand_probe(struct platform_device *pdev)
 
 	nand->dev = dev;
 
-	struct gpio_desc **dgpio_p = &nand->dgpio;
+	dgpio_p = &nand->dgpio->io0;
 	/* get gpio pins for data lines */
 	for (i = 0; i < RB750_NAND_DATA_LINES; i++) {
 		*dgpio_p = devm_gpiod_get_index(dev, "data", i, GPIOD_IN);
-		if (ISERR(*dgpio_p))
+		if (IS_ERR(*dgpio_p))
 			dev_err(dev, "missing gpio I/O %d: %ld\n", i, PTR_ERR(*dgpio_p));
 		dgpio_p++;
 	}
 
-	if (ISERR(nand->dgpio->io0) || ISERR(nand->dgpio->io1) ||
-	    ISERR(nand->dgpio->io2) || ISERR(nand->dgpio->io3) ||
-	    ISERR(nand->dgpio->io4) || ISERR(nand->dgpio->io5) ||
-	    ISERR(nand->dgpio->io6) || ISERR(nand->dgpio->io7))
+	if (IS_ERR(nand->dgpio->io0) || IS_ERR(nand->dgpio->io1) ||
+	    IS_ERR(nand->dgpio->io2) || IS_ERR(nand->dgpio->io3) ||
+	    IS_ERR(nand->dgpio->io4) || IS_ERR(nand->dgpio->io5) ||
+	    IS_ERR(nand->dgpio->io6) || IS_ERR(nand->dgpio->io7))
 		return -ENOENT;
 
-	char line_name[32];
-	dgpio_p = &nand->dgpio;
+	dgpio_p = &nand->dgpio->io0;
 	for (i = 0; i < RB750_NAND_DATA_LINES; i++) {
 		sprintf(line_name, "mikrotik:nand:io%d", i);
 		gpiod_set_consumer_name(*dgpio_p, line_name);
@@ -297,35 +287,35 @@ static int rb750_nand_probe(struct platform_device *pdev)
 	}
 
 /*	nand->dgpio->io0 = devm_gpiod_get_index(dev, "data", 0, GPIOD_IN);
-	if (ISERR(nand->dgpio->io0))
+	if (IS_ERR(nand->dgpio->io0))
 		dev_err(dev, "missing gpio IO0: %ld\n", PTR_ERR(nand->dgpio->io0));
 */
 	nand->ale = devm_gpiod_get_index(dev, "ctrl", 1, GPIOD_OUT_LOW);
-	if (ISERR(nand->ale))
+	if (IS_ERR(nand->ale))
 		dev_err(dev, "missing gpio ALE: %ld\n", PTR_ERR(nand->ale));
 
 	nand->cle = devm_gpiod_get_index(dev, "ctrl", 2, GPIOD_OUT_LOW);
-	if (ISERR(nand->cle))
+	if (IS_ERR(nand->cle))
 		dev_err(dev, "missing gpio CLE: %ld\n", PTR_ERR(nand->cle));
 
 	nand->nce = devm_gpiod_get_index(dev, "ctrl", 3, GPIOD_OUT_HIGH);
-	if (ISERR(nand->nce))
+	if (IS_ERR(nand->nce))
 		dev_err(dev, "missing gpio nCE: %ld\n", PTR_ERR(nand->nce));
 
 	nand->nre = devm_gpiod_get_index(dev, "ctrl", 4, GPIOD_OUT_HIGH);
-	if (ISERR(nand->nre))
+	if (IS_ERR(nand->nre))
 		dev_err(dev, "missing gpio NRE: %ld\n", PTR_ERR(nand->nre));
 
 	nand->nwe = devm_gpiod_get_index(dev, "ctrl", 5, GPIOD_OUT_HIGH);
-	if (ISERR(nand->nwe))
+	if (IS_ERR(nand->nwe))
 		dev_err(dev, "missing gpio NWE: %ld\n", PTR_ERR(nand->nwe));
 
 	nand->rdy = devm_gpiod_get_index(dev, "ctrl", 6, GPIOD_IN);
-	if (ISERR(nand->rdy))
+	if (IS_ERR(nand->rdy))
 		dev_err(dev, "missing gpio RDY: %ld\n", PTR_ERR(nand->rdy));
 
-	if (ISERR(nand->ale) || ISERR(nand->cle) || ISERR(nand->nce) ||
-	    ISERR(nand->nre) || ISERR(nand->nwe) || ISERR(nand->rdy))
+	if (IS_ERR(nand->ale) || IS_ERR(nand->cle) || IS_ERR(nand->nce) ||
+	    IS_ERR(nand->nre) || IS_ERR(nand->nwe) || IS_ERR(nand->rdy))
 		return -ENOENT;
 
 	gpiod_set_consumer_name(nand->ale, "mikrotik:nand:ale");
