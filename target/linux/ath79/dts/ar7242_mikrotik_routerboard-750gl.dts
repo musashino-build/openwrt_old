@@ -1,0 +1,105 @@
+// SPDX-License-Identifier: GPL-2.0-or-later OR MIT
+
+#include "ar7242.dtsi"
+
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/input/input.h>
+
+/ {
+	compatible = "mikrotik,routerboard-750gl", "qca,ar7242";
+	model = "MikroTik RouterBOARD 750GL";
+
+	extosc: ref {
+		compatible = "fixed-clock";
+		#clock-cells = <0>;
+		clock-frequency = <40000000>;
+	};
+
+/*	leds {
+		compatible = "gpio-leds";
+
+		act {
+			label = "green:act";
+			gpios = <&gpio 11 GPIO_ACTIVE_LOW>;
+		};
+	};*/
+
+	nand {
+		compatible = "mikrotik,rb750-nand";
+		pinctrl-names = "default";
+		pinctrl-0 = <&jtag_disable_pins>,
+			    <&switch_led_disable_pins>;
+
+		data-gpios = <&gpio 1 GPIO_ACTIVE_HIGH>,	// I/O 0
+			<&gpio 2 GPIO_ACTIVE_HIGH>,		// I/O 1
+			<&gpio 3 GPIO_ACTIVE_HIGH>,		// I/O 2
+			<&gpio 4 GPIO_ACTIVE_HIGH>,		// I/O 3
+			<&gpio 5 GPIO_ACTIVE_HIGH>,		// I/O 4
+			<&gpio 6 GPIO_ACTIVE_HIGH>,		// I/O 5
+			<&gpio 7 GPIO_ACTIVE_HIGH>,		// I/O 6
+			<&gpio 8 GPIO_ACTIVE_HIGH>;		// I/O 7
+
+		ctrl-gpios = <&gpio 15 GPIO_ACTIVE_HIGH>,	// ALE
+			<&gpio 14 GPIO_ACTIVE_HIGH>,		// CLE
+			<&gpio 0 GPIO_ACTIVE_HIGH>,		// nCE
+			<&gpio 16 GPIO_ACTIVE_HIGH>,		// NRE
+			<&gpio 17 GPIO_ACTIVE_HIGH>,		// NWE
+			<&gpio 12 GPIO_ACTIVE_HIGH>;		// RDY
+
+		partitions {
+			compatible = "fixed-partitions";
+			#address-cells = <1>;
+			#size-cells = <1>;
+
+			partition@0 {
+				label = "booter";
+				reg = <0x000000 0x0040000>;
+				read-only;
+			};
+
+			partition@40000 {
+				label = "kernel";
+				reg = <0x040000 0x03c0000>;
+			};
+
+			partition@400000 {
+				label = "ubi";
+				reg = <0x400000 0x7c00000>;
+			};
+		};
+	};
+};
+
+&mdio0 {
+	status = "okay";
+
+	phy-mask = <0x1>;
+
+	phy0: ethernet-phy@0 {
+		reg = <0>;
+
+		qca,ar8327-initvalds = <
+			0x04 0x07600000 /* PORT0 PAD MODE CTRL */
+			0x7c 0x0000007e /* PORT0_STATUS */
+		>;
+	};
+};
+
+&eth0 {
+	status = "okay";
+
+	pll-data = <0x62000000 0x00000101 0x00001616>;
+
+//	mtd-mac-address = <&art 0x120c>;
+
+	phy-mode = "rgmii";
+	phy-handle = <&phy0>;
+};
+
+&pll {
+	clocks = <&extosc>;
+};
+
+&uart {
+	status = "okay";
+};

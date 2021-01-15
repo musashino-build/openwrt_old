@@ -9,6 +9,14 @@ define Device/mikrotik_routerboard-493g
 endef
 TARGET_DEVICES += mikrotik_routerboard-493g
 
+define Device/mikrotik_routerboard-750gl
+  $(Device/mikrotik_nand)
+  SOC := ar7242
+  DEVICE_MODEL := RouterBOARD 750GL
+  SUPPORTED_DEVICES += rb-750gl
+endef
+TARGET_DEVICES += mikrotik_routerboard-750gl
+
 define Device/mikrotik_routerboard-921gs-5hpacd-15s
   $(Device/mikrotik_nand)
   SOC := qca9558
