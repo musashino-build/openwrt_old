@@ -1,0 +1,28 @@
+Index: linux-5.4.87/drivers/mtd/nand/raw/Kconfig
+===================================================================
+--- linux-5.4.87.orig/drivers/mtd/nand/raw/Kconfig
++++ linux-5.4.87/drivers/mtd/nand/raw/Kconfig
+@@ -559,4 +559,11 @@ config MTD_NAND_RB4XX
+ 	  Enables support for the NAND flash chip on Mikrotik Routerboard
+ 	  RB4xx series.
+ 
++config MTD_NAND_RB750
++	tristate "NAND flash driver for the RouterBoard 750"
++	depends on ATH79
++	help
++	  Enables support for the NAND flash chip on MikroTik RouterBoard
++	  RB750 series.
++
+ endif # MTD_RAW_NAND
+Index: linux-5.4.87/drivers/mtd/nand/raw/Makefile
+===================================================================
+--- linux-5.4.87.orig/drivers/mtd/nand/raw/Makefile
++++ linux-5.4.87/drivers/mtd/nand/raw/Makefile
+@@ -59,6 +59,7 @@ obj-$(CONFIG_MTD_NAND_STM32_FMC2)	+= stm
+ obj-$(CONFIG_MTD_NAND_MESON)		+= meson_nand.o
+ obj-$(CONFIG_MTD_NAND_AR934X)		+= ar934x_nand.o
+ obj-$(CONFIG_MTD_NAND_RB4XX)		+= nand_rb4xx.o
++obj-$(CONFIG_MTD_NAND_RB750)		+= nand_rb750.o
+ 
+ nand-objs := nand_base.o nand_legacy.o nand_bbt.o nand_timings.o nand_ids.o
+ nand-objs += nand_onfi.o
