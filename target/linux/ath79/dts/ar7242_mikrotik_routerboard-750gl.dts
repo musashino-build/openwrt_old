@@ -15,14 +15,14 @@
 		clock-frequency = <40000000>;
 	};
 
-/*	leds {
+	leds {
 		compatible = "gpio-leds";
 
 		act {
 			label = "green:act";
 			gpios = <&gpio 11 GPIO_ACTIVE_LOW>;
 		};
-	};*/
+	};
 
 	nand {
 		compatible = "mikrotik,rb750-nand";
