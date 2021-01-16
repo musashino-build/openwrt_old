@@ -70,6 +70,42 @@
 	};
 };
 
+&spi {
+	status = "okay";
+
+	/*
+	 * several pins are shared with the gpio-controlled
+	 * parallel-NAND chip:
+	 *
+	 * GPIO #0 -> NAND nCE (CS1)
+	 * GPIO #1 -> NAND I/O 0
+	 * GPIO #2 -> NAND I/O 1, SPI-NOR CS (CS0)
+	 * GPIO #3 -> NAND I/O 2, SPI-NOR CLK
+	 * GPIO #4 -> NAND I/O 3, SPI-NOR SI
+	 * GPIO #5 -> NAND I/O 4, SPI-NOR SO
+	 * GPIO #6 -> NAND I/O 5
+	 * GPIO #7 -> NAND I/O 6
+	 * GPIO #8 -> NAND I/O 7
+	 */
+	/* MX25L512E */
+	flash@0 {
+		compatible = "jedec,spi-nor";
+		reg = <0>;
+		spi-max-frequency = <25000000>;
+
+		partitions {
+			compatible = "fixed-partitions";
+			#address-cells = <1>;
+			#size-cells = <1>;
+
+			partition@0 {
+				label = "unknown";
+				reg = <0x00000 0x10000>;
+			};
+		};
+	};
+};
+
 &mdio0 {
 	status = "okay";
 
