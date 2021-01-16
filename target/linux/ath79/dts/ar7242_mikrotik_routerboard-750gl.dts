@@ -24,7 +24,7 @@
 		};
 	};
 
-	nand {
+/*	nand {
 		compatible = "mikrotik,rb750-nand";
 		pinctrl-names = "default";
 		pinctrl-0 = <&jtag_disable_pins>,
@@ -67,7 +67,7 @@
 				reg = <0x400000 0x7c00000>;
 			};
 		};
-	};
+	};*/
 };
 
 &spi {
