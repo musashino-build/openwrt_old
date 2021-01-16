@@ -10,9 +10,13 @@ endef
 TARGET_DEVICES += mikrotik_routerboard-493g
 
 define Device/mikrotik_routerboard-750gl
-  $(Device/mikrotik_nand)
   SOC := ar7242
   DEVICE_MODEL := RouterBOARD 750GL
+  LOADER_TYPE := elf
+  KERNEL := kernel-bin | append-dtb | lzma | loader-kernel
+  KERNEL_INITRAMFS := kernel-bin | append-dtb | lzma | loader-kernel
+  IMAGE/sysupgrade.bin := append-kernel | kernel2minor -s 2048 -e -c | \
+	sysupgrade-tar kernel=$$$$@ | append-metadata
   SUPPORTED_DEVICES += rb-750gl
 endef
 TARGET_DEVICES += mikrotik_routerboard-750gl
