@@ -11,6 +11,7 @@ TARGET_DEVICES += mikrotik_routerboard-493g
 
 define Device/mikrotik_routerboard-750gl
   SOC := ar7242
+  DEVICE_VENDOR := MikroTik
   DEVICE_MODEL := RouterBOARD 750GL
   LOADER_TYPE := elf
   KERNEL := kernel-bin | append-dtb | lzma | loader-kernel
