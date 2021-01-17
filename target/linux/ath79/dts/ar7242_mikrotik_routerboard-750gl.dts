@@ -132,10 +132,19 @@
 	phy-handle = <&phy0>;
 };
 
+&pinmux {
+	uart_enable_pins: pinmux_uart_enable_pins {
+		pinctrl-single,bits = <0x0 0x1 0x2>;
+	};
+};
+
 &pll {
 	clocks = <&extosc>;
 };
 
 &uart {
 	status = "okay";
+
+	pinctrl-names = "default";
+	pinctrl-0 = <&uart_enable_pins>;
 };
