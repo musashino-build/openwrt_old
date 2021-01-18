@@ -50,7 +50,24 @@ static void tlwr1043nd_init(void)
 static inline void tlwr1043nd_init(void) {}
 #endif
 
+#ifdef CONFIG_BOARD_RB750GL
+static void rb750gl_init(void)
+{
+	unsigned int reg = KSEG1ADDR(AR71XX_GPIO_BASE);
+	unsigned int t;
+
+	t = READREG(reg + AR71XX_GPIO_REG_FUNC);
+	t |= AR724X_GPIO_FUNC_UART_EN;
+	WRITEREG(reg + AR71XX_GPIO_REG_FUNC, t);
+	/* flush write */
+	t = READREG(reg + AR71XX_GPIO_REG_FUNC);
+}
+#else
+static inline void rb750gl_init(void) {}
+#endif
+
 void board_init(void)
 {
 	tlwr1043nd_init();
+	rb750gl_init();
 }
