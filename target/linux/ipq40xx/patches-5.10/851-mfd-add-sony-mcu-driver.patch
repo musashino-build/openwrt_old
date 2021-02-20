@@ -1,0 +1,24 @@
+--- a/drivers/mfd/Kconfig
++++ b/drivers/mfd/Kconfig
+@@ -2168,5 +2168,13 @@ config MFD_INTEL_M10_BMC
+ 	  additional drivers must be enabled in order to use the functionality
+ 	  of the device.
+ 
++config MFD_SONY_MCU
++	tristate "MCU driver for Sony NCP-HG100"
++	select MFD_CORE
++	depends on ARCH_IPQ40XX || COMPILE_TEST
++	help
++	  Enables support for the MCU chip (RGB LED & Fan & Thermal
++	  Sensors) on Sony NCP-HG100.
++
+ endmenu
+ endif
+--- a/drivers/mfd/Makefile
++++ b/drivers/mfd/Makefile
+@@ -267,3 +267,5 @@ obj-$(CONFIG_MFD_KHADAS_MCU) 	+= khadas-
+ obj-$(CONFIG_SGI_MFD_IOC3)	+= ioc3.o
+ obj-$(CONFIG_MFD_SIMPLE_MFD_I2C)	+= simple-mfd-i2c.o
+ obj-$(CONFIG_MFD_INTEL_M10_BMC)   += intel-m10-bmc.o
++
++obj-$(CONFIG_MFD_SONY_MCU)	+= sony-mcu.o
