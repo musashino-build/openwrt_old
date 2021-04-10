@@ -526,7 +526,7 @@
 			function-enumerator = <7>;
 		};
 
-		led_cloud_green: led@4 {
+		led@4 {
 			chan-name = "green:cloud";
 			led-cur = /bits/ 8 <50>;
 			max-cur = /bits/ 8 <100>;
@@ -566,7 +566,7 @@
 			function-enumerator = <9>;
 		};
 
-		led_cloud_red: led@8 {
+		led@8 {
 			chan-name = "red:cloud";
 			led-cur = /bits/ 8 <50>;
 			max-cur = /bits/ 8 <100>;
