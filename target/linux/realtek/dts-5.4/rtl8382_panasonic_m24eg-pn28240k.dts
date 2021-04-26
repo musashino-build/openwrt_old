@@ -67,6 +67,36 @@
 		i2c-gpio,delay-us = <2>;
 		#address-cells = <1>;
 		#size-cells = <0>;
+
+		gpio1: gpio@20 {
+			compatible = "nxp,pca9555";
+			reg = <0x20>;
+			gpio-controller;
+			#gpio-cells = <2>;
+		};
+
+		gpio2: gpio@75 {
+			compatible = "nxp,pca9539";
+			reg = <0x75>;
+			gpio-controller;
+			#gpio-cells = <2>;
+
+			/* GPIO12 (IO1_4): RTL8218B + RTL8218FB */
+			ext_switch_reset {
+				gpio-hog;
+				gpios = <12 GPIO_ACTIVE_HIGH>;
+				output-high;
+				line-name = "ext-switch-reset";
+			};
+
+			/* GPIO14 (IO1_6): 6x Shift Register (port LED) */
+			portled_sregister_reset {
+				gpio-hog;
+				gpios = <14 GPIO_ACTIVE_HIGH>;
+				output-high;
+				line-name = "portled-sregister-reset";
+			};
+		};
 	};
 };
 
