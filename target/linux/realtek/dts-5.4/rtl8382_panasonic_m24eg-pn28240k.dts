@@ -151,6 +151,29 @@
 			};
 		};
 	};
+
+	/*
+	 * sfp0/1 are "combo" port with each TP port (23/24), and they are
+	 * connected to the RTL8218FB. Currently, there is no support for
+	 * the chip and only TP ports work by the RTL8218D support.
+	 */
+	sfp0: sfp-p23 {
+		compatible = "sff,sfp";
+		i2c-bus = <&i2c0>;
+		tx-fault-gpio = <&gpio1 0 GPIO_ACTIVE_HIGH>;
+		tx-disable-gpio = <&gpio1 1 GPIO_ACTIVE_HIGH>;
+		mod-def0-gpio = <&gpio1 2 GPIO_ACTIVE_LOW>;
+		los-gpio = <&gpio1 3 GPIO_ACTIVE_HIGH>;
+	};
+
+	sfp1: sfp-p24 {
+		compatible = "sff,sfp";
+		i2c-bus = <&i2c1>;
+		tx-fault-gpio = <&gpio1 4 GPIO_ACTIVE_HIGH>;
+		tx-disable-gpio = <&gpio1 5 GPIO_ACTIVE_HIGH>;
+		mod-def0-gpio = <&gpio1 6 GPIO_ACTIVE_LOW>;
+		los-gpio = <&gpio1 7 GPIO_ACTIVE_HIGH>;
+	};
 };
 
 &gpio0 {
