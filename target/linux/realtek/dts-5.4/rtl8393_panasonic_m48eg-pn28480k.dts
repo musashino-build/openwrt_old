@@ -95,19 +95,33 @@
 			#address-cells = <1>;
 			#size-cells = <0>;
 
-			/* for port 23 (combo) SFP */
-/*			i2c0: i2c@0 {
+			/* for port 45 (combo) SFP */
+			i2c0: i2c@0 {
 				#address-cells = <1>;
 				#size-cells = <0>;
 				reg = <0>;
-			};*/
+			};
 
-			/* for port 24 (combo) SFP */
-/*			i2c1: i2c@1 {
+			/* for port 46 (combo) SFP */
+			i2c1: i2c@1 {
 				#address-cells = <1>;
 				#size-cells = <0>;
 				reg = <1>;
-			};*/
+			};
+
+			/* for port 47 (combo) SFP */
+			i2c2: i2c@2 {
+				#address-cells = <1>;
+				#size-cells = <0>;
+				reg = <2>;
+			};
+
+			/* for port 48 (combo) SFP */
+			i2c3: i2c@3 {
+				#address-cells = <1>;
+				#size-cells = <0>;
+				reg = <3>;
+			};
 		};
 	};
 
@@ -153,11 +167,12 @@
 	};
 
 	/*
-	 * sfp0/1 are "combo" port with each TP port (23/24), and they are
-	 * connected to the RTL8218FB. Currently, there is no support for
-	 * the chip and only TP ports work by the RTL8218D support.
+	 * sfp0/1/2/3 are "combo" port with each TP port (45/46/47/48),
+	 * and they are connected to the RTL8218FB. Currently, there is
+	 * no support for the chip and only TP ports work by the RTL8218D
+	 * support.
 	 */
-/*	sfp0: sfp-p23 {
+	sfp0: sfp-p45 {
 		compatible = "sff,sfp";
 		i2c-bus = <&i2c0>;
 		tx-fault-gpio = <&gpio1 0 GPIO_ACTIVE_HIGH>;
@@ -166,14 +181,32 @@
 		los-gpio = <&gpio1 3 GPIO_ACTIVE_HIGH>;
 	};
 
-	sfp1: sfp-p24 {
+	sfp1: sfp-p46 {
 		compatible = "sff,sfp";
 		i2c-bus = <&i2c1>;
 		tx-fault-gpio = <&gpio1 4 GPIO_ACTIVE_HIGH>;
 		tx-disable-gpio = <&gpio1 5 GPIO_ACTIVE_HIGH>;
 		mod-def0-gpio = <&gpio1 6 GPIO_ACTIVE_LOW>;
 		los-gpio = <&gpio1 7 GPIO_ACTIVE_HIGH>;
-	};*/
+	};
+
+	sfp2: sfp-p47 {
+		compatible = "sff,sfp";
+		i2c-bus = <&i2c2>;
+		tx-fault-gpio = <&gpio1 8 GPIO_ACTIVE_HIGH>;
+		tx-disable-gpio = <&gpio1 9 GPIO_ACTIVE_HIGH>;
+		mod-def0-gpio = <&gpio1 10 GPIO_ACTIVE_LOW>;
+		los-gpio = <&gpio1 11 GPIO_ACTIVE_HIGH>;
+	};
+
+	sfp3: sfp-p48 {
+		compatible = "sff,sfp";
+		i2c-bus = <&i2c3>;
+		tx-fault-gpio = <&gpio1 12 GPIO_ACTIVE_HIGH>;
+		tx-disable-gpio = <&gpio1 13 GPIO_ACTIVE_HIGH>;
+		mod-def0-gpio = <&gpio1 14 GPIO_ACTIVE_LOW>;
+		los-gpio = <&gpio1 15 GPIO_ACTIVE_HIGH>;
+	};
 };
 
 &gpio0 {
