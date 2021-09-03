@@ -9,12 +9,12 @@
 	compatible = "panasonic,m48eg-pn28480k", "realtek,rtl839x-soc";
 	model = "Panasonic Switch-M48eG PN28480K";
 
-/*	aliases {
+	aliases {
 		led-boot = &led_status_eco_green;
 		led-failsafe = &led_status_eco_amber;
 		led-running = &led_status_eco_green;
 		led-upgrade = &led_status_eco_green;
-	};*/
+	};
 
 	chosen {
 		bootargs = "console=ttyS0,9600";
@@ -28,19 +28,19 @@
 	leds {
 		compatible = "gpio-leds";
 
-/*		any_collision {
+		any_collision {
 			label = "amber:any_col";
 			gpios = <&gpio2 0 GPIO_ACTIVE_LOW>;
 		};
 
 		led_status_eco_amber: status_eco_amber {
 			label = "amber:status_eco";
-			gpios = <&gpio2 1 GPIO_ACTIVE_LOW>;
+			gpios = <&gpio2 1 GPIO_ACTIVE_HIGH>;
 		};
 
 		led_status_eco_green: status_eco_green {
 			label = "green:status_eco";
-			gpios = <&gpio2 2 GPIO_ACTIVE_LOW>;
+			gpios = <&gpio2 2 GPIO_ACTIVE_HIGH>;
 		};
 
 		giga {
@@ -61,18 +61,18 @@
 		loop_history {
 			label = "green:loop_history";
 			gpios = <&gpio2 11 GPIO_ACTIVE_LOW>;
-		};*/
+		};
 	};
 
 	keys {
 		compatible = "gpio-keys-polled";
 		poll-interval = <20>;
 
-/*		led_mode {
+		led_mode {
 			label = "led-mode";
 			gpios = <&gpio2 15 GPIO_ACTIVE_LOW>;
 			linux,code = <BTN_0>;
-		};*/
+		};
 	};
 
 	/* Switch-M48eG PN28480K has no RTL8231 chip */
