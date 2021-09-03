@@ -1,0 +1,388 @@
+// SPDX-License-Identifier: GPL-2.0-or-later OR MIT
+
+#include "rtl839x.dtsi"
+
+#include <dt-bindings/input/input.h>
+#include <dt-bindings/gpio/gpio.h>
+
+/ {
+	compatible = "panasonic,m48eg-pn28480k", "realtek,rtl839x-soc";
+	model = "Panasonic Switch-M48eG PN28480K";
+
+/*	aliases {
+		led-boot = &led_status_eco_green;
+		led-failsafe = &led_status_eco_amber;
+		led-running = &led_status_eco_green;
+		led-upgrade = &led_status_eco_green;
+	};*/
+
+	chosen {
+		bootargs = "console=ttyS0,9600";
+	};
+
+	memory@0 {
+		device_type = "memory";
+		reg = <0x0 0x8000000>;
+	};
+
+	leds {
+		compatible = "gpio-leds";
+
+/*		any_collision {
+			label = "amber:any_col";
+			gpios = <&gpio2 0 GPIO_ACTIVE_LOW>;
+		};
+
+		led_status_eco_amber: status_eco_amber {
+			label = "amber:status_eco";
+			gpios = <&gpio2 1 GPIO_ACTIVE_LOW>;
+		};
+
+		led_status_eco_green: status_eco_green {
+			label = "green:status_eco";
+			gpios = <&gpio2 2 GPIO_ACTIVE_LOW>;
+		};
+
+		giga {
+			label = "green:giga";
+			gpios = <&gpio2 8 GPIO_ACTIVE_LOW>;
+		};
+
+		100m {
+			label = "green:100m";
+			gpios = <&gpio2 9 GPIO_ACTIVE_LOW>;
+		};
+
+		full_duplex {
+			label = "green:full";
+			gpios = <&gpio2 10 GPIO_ACTIVE_LOW>;
+		};
+
+		loop_history {
+			label = "green:loop_history";
+			gpios = <&gpio2 11 GPIO_ACTIVE_LOW>;
+		};*/
+	};
+
+	keys {
+		compatible = "gpio-keys-polled";
+		poll-interval = <20>;
+
+/*		led_mode {
+			label = "led-mode";
+			gpios = <&gpio2 15 GPIO_ACTIVE_LOW>;
+			linux,code = <BTN_0>;
+		};*/
+	};
+
+	/* Switch-M48eG PN28480K has no RTL8231 chip */
+	/delete-node/ rtl8231-gpio;
+
+	i2c-gpio-0 {
+		compatible = "i2c-gpio";
+		/* SoC GPIO 14 */
+		scl-gpios = <&gpio0 22 (GPIO_ACTIVE_HIGH | GPIO_OPEN_DRAIN)>;
+		/* SoC GPIO 15 */
+		sda-gpios = <&gpio0 23 (GPIO_ACTIVE_HIGH | GPIO_OPEN_DRAIN)>;
+		i2c-gpio,delay-us = <2>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		i2c-switch@70 {
+			compatible = "nxp,pca9545";
+			reset-gpios = <&gpio2 13 GPIO_ACTIVE_LOW>;
+			reg = <0x70>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			/* for port 23 (combo) SFP */
+/*			i2c0: i2c@0 {
+				#address-cells = <1>;
+				#size-cells = <0>;
+				reg = <0>;
+			};*/
+
+			/* for port 24 (combo) SFP */
+/*			i2c1: i2c@1 {
+				#address-cells = <1>;
+				#size-cells = <0>;
+				reg = <1>;
+			};*/
+		};
+	};
+
+	i2c-gpio-1 {
+		compatible = "i2c-gpio";
+		/* SoC GPIO 16 */
+		scl-gpios = <&gpio0 8 (GPIO_ACTIVE_HIGH | GPIO_OPEN_DRAIN)>;
+		/* SoC GPIO 17 */
+		sda-gpios = <&gpio0 9 (GPIO_ACTIVE_HIGH | GPIO_OPEN_DRAIN)>;
+		i2c-gpio,delay-us = <2>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		gpio1: gpio@20 {
+			compatible = "nxp,pca9555";
+			reg = <0x20>;
+			gpio-controller;
+			#gpio-cells = <2>;
+		};
+
+		gpio2: gpio@75 {
+			compatible = "nxp,pca9539";
+			reg = <0x75>;
+			gpio-controller;
+			#gpio-cells = <2>;
+
+			/* GPIO12 (IO1_4): RTL8218B + RTL8218FB */
+/*			ext_switch_reset {
+				gpio-hog;
+				gpios = <12 GPIO_ACTIVE_HIGH>;
+				output-high;
+				line-name = "ext-switch-reset";
+			};*/
+
+			/* GPIO14 (IO1_6): 6x Shift Register (port LED) */
+/*			portled_sregister_reset {
+				gpio-hog;
+				gpios = <14 GPIO_ACTIVE_HIGH>;
+				output-high;
+				line-name = "portled-sregister-reset";
+			};*/
+		};
+	};
+
+	/*
+	 * sfp0/1 are "combo" port with each TP port (23/24), and they are
+	 * connected to the RTL8218FB. Currently, there is no support for
+	 * the chip and only TP ports work by the RTL8218D support.
+	 */
+/*	sfp0: sfp-p23 {
+		compatible = "sff,sfp";
+		i2c-bus = <&i2c0>;
+		tx-fault-gpio = <&gpio1 0 GPIO_ACTIVE_HIGH>;
+		tx-disable-gpio = <&gpio1 1 GPIO_ACTIVE_HIGH>;
+		mod-def0-gpio = <&gpio1 2 GPIO_ACTIVE_LOW>;
+		los-gpio = <&gpio1 3 GPIO_ACTIVE_HIGH>;
+	};
+
+	sfp1: sfp-p24 {
+		compatible = "sff,sfp";
+		i2c-bus = <&i2c1>;
+		tx-fault-gpio = <&gpio1 4 GPIO_ACTIVE_HIGH>;
+		tx-disable-gpio = <&gpio1 5 GPIO_ACTIVE_HIGH>;
+		mod-def0-gpio = <&gpio1 6 GPIO_ACTIVE_LOW>;
+		los-gpio = <&gpio1 7 GPIO_ACTIVE_HIGH>;
+	};*/
+};
+
+&gpio0 {
+	indirect-access-bus-id = <0>;
+};
+
+&spi0 {
+	status = "okay";
+
+	flash@0 {
+		compatible = "jedec,spi-nor";
+		reg = <0>;
+		spi-max-frequency = <10000000>;
+
+		partitions {
+			compatible = "fixed-partitions";
+			#address-cells = <1>;
+			#size-cells = <1>;
+
+			partition@0 {
+				label = "u-boot";
+				reg = <0x0 0x80000>;
+				read-only;
+			};
+
+			partition@80000 {
+				label = "u-boot-env";
+				reg = <0x80000 0x10000>;
+			};
+
+			partition@90000 {
+				label = "u-boot-env2";
+				reg = <0x90000 0x10000>;
+			};
+
+			partition@a0000 {
+				label = "sysinfo";
+				reg = <0xa0000 0x60000>;
+				read-only;
+			};
+
+			/*
+			 * 0x100000 - 0x1DFFFFF
+			 * Filesystem area for runtime images and
+			 * configuration files in stock firmware
+			 */
+
+			/*
+			 * re-created filesystem area, 2x stock images
+			 * are included with checksum files
+			 */
+			partition@100000 {
+				label = "fs_reserved";
+				reg = <0x100000 0xd00000>;
+			};
+
+			/* free area for OpenWrt */
+			partition@e00000 {
+				compatible = "denx,uimage";
+				label = "firmware";
+				reg = <0xe00000 0x1000000>;
+			};
+
+			partition@1e00000 {
+				label = "vlog_data";
+				reg = <0x1e00000 0x100000>;
+				read-only;
+			};
+
+			partition@1f00000 {
+				label = "elog_data";
+				reg = <0x1f00000 0x100000>;
+				read-only;
+			};
+		};
+	};
+};
+
+&ethernet0 {
+	mdio-bus {
+		compatible = "realtek,rtl838x-mdio";
+		regmap = <&ethernet0>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		EXTERNAL_PHY(0)
+		EXTERNAL_PHY(1)
+		EXTERNAL_PHY(2)
+		EXTERNAL_PHY(3)
+		EXTERNAL_PHY(4)
+		EXTERNAL_PHY(5)
+		EXTERNAL_PHY(6)
+		EXTERNAL_PHY(7)
+
+		EXTERNAL_PHY(8)
+		EXTERNAL_PHY(9)
+		EXTERNAL_PHY(10)
+		EXTERNAL_PHY(11)
+		EXTERNAL_PHY(12)
+		EXTERNAL_PHY(13)
+		EXTERNAL_PHY(14)
+		EXTERNAL_PHY(15)
+
+		EXTERNAL_PHY(16)
+		EXTERNAL_PHY(17)
+		EXTERNAL_PHY(18)
+		EXTERNAL_PHY(19)
+		EXTERNAL_PHY(20)
+		EXTERNAL_PHY(21)
+		EXTERNAL_PHY(22)
+		EXTERNAL_PHY(23)
+
+		EXTERNAL_PHY(24)
+		EXTERNAL_PHY(25)
+		EXTERNAL_PHY(26)
+		EXTERNAL_PHY(27)
+		EXTERNAL_PHY(28)
+		EXTERNAL_PHY(29)
+		EXTERNAL_PHY(30)
+		EXTERNAL_PHY(31)
+
+		EXTERNAL_PHY(32)
+		EXTERNAL_PHY(33)
+		EXTERNAL_PHY(34)
+		EXTERNAL_PHY(35)
+		EXTERNAL_PHY(36)
+		EXTERNAL_PHY(37)
+		EXTERNAL_PHY(38)
+		EXTERNAL_PHY(39)
+
+		EXTERNAL_PHY(40)
+		EXTERNAL_PHY(41)
+		EXTERNAL_PHY(42)
+		EXTERNAL_PHY(43)
+		EXTERNAL_PHY(44)
+		EXTERNAL_PHY(45)
+		EXTERNAL_PHY(46)
+		EXTERNAL_PHY(47)
+	};
+};
+
+&switch0 {
+	ports {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		SWITCH_PORT(0, 1, qsgmii)
+		SWITCH_PORT(1, 2, qsgmii)
+		SWITCH_PORT(2, 3, qsgmii)
+		SWITCH_PORT(3, 4, qsgmii)
+		SWITCH_PORT(4, 5, qsgmii)
+		SWITCH_PORT(5, 6, qsgmii)
+		SWITCH_PORT(6, 7, qsgmii)
+		SWITCH_PORT(7, 8, qsgmii)
+
+		SWITCH_PORT(8, 9, qsgmii)
+		SWITCH_PORT(9, 10, qsgmii)
+		SWITCH_PORT(10, 11, qsgmii)
+		SWITCH_PORT(11, 12, qsgmii)
+		SWITCH_PORT(12, 13, qsgmii)
+		SWITCH_PORT(13, 14, qsgmii)
+		SWITCH_PORT(14, 15, qsgmii)
+		SWITCH_PORT(15, 16, qsgmii)
+
+		SWITCH_PORT(16, 17, qsgmii)
+		SWITCH_PORT(17, 18, qsgmii)
+		SWITCH_PORT(18, 19, qsgmii)
+		SWITCH_PORT(19, 20, qsgmii)
+		SWITCH_PORT(20, 21, qsgmii)
+		SWITCH_PORT(21, 22, qsgmii)
+		SWITCH_PORT(22, 23, qsgmii)
+		SWITCH_PORT(23, 24, qsgmii)
+
+		SWITCH_PORT(24, 25, qsgmii)
+		SWITCH_PORT(25, 26, qsgmii)
+		SWITCH_PORT(26, 27, qsgmii)
+		SWITCH_PORT(27, 28, qsgmii)
+		SWITCH_PORT(28, 29, qsgmii)
+		SWITCH_PORT(29, 30, qsgmii)
+		SWITCH_PORT(30, 31, qsgmii)
+		SWITCH_PORT(31, 32, qsgmii)
+
+		SWITCH_PORT(32, 33, qsgmii)
+		SWITCH_PORT(33, 34, qsgmii)
+		SWITCH_PORT(34, 35, qsgmii)
+		SWITCH_PORT(35, 36, qsgmii)
+		SWITCH_PORT(36, 37, qsgmii)
+		SWITCH_PORT(37, 38, qsgmii)
+		SWITCH_PORT(38, 39, qsgmii)
+		SWITCH_PORT(39, 40, qsgmii)
+
+		SWITCH_PORT(40, 41, qsgmii)
+		SWITCH_PORT(41, 42, qsgmii)
+		SWITCH_PORT(42, 43, qsgmii)
+		SWITCH_PORT(43, 44, qsgmii)
+		SWITCH_PORT(44, 45, qsgmii)
+		SWITCH_PORT(45, 46, qsgmii)
+		SWITCH_PORT(46, 47, qsgmii)
+		SWITCH_PORT(47, 48, qsgmii)
+
+		port@52 {
+			ethernet = <&ethernet0>;
+			reg = <52>;
+			phy-mode = "internal";
+
+			fixed-link {
+				speed = <1000>;
+				full-duplex;
+			};
+		};
+	};
+};
