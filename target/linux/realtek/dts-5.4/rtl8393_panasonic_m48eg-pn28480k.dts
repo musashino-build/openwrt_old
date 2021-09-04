@@ -142,6 +142,23 @@
 			#gpio-cells = <2>;
 		};
 
+		/*
+		 * there is no support for TCN75A in Linux Kernel,
+		 * use TCN75 support instead
+		 * ('A' variant supports resolution setting)
+		 */
+		/* Microchip TCN75A (near SoC) */
+		sensor@48 {
+			compatible = "microchip,tcn75";
+			reg = <0x48>;
+		};
+
+		/* Microchip TCN75A (board, near fan) */
+		sensor@49 {
+			compatible = "microchip,tcn75";
+			reg = <0x49>;
+		};
+
 		gpio2: gpio@75 {
 			compatible = "nxp,pca9539";
 			reg = <0x75>;
