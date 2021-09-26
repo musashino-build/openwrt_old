@@ -25,7 +25,7 @@
 		compatible = "sff,sfp";
 		i2c-bus = <&i2c0>;
 		tx-fault-gpio = <&gpio1 0 GPIO_ACTIVE_HIGH>;
-		tx-disable-gpio = <&gpio1 1 GPIO_ACTIVE_HIGH>;
+		//tx-disable-gpio = <&gpio1 1 GPIO_ACTIVE_HIGH>;
 		mod-def0-gpio = <&gpio1 2 GPIO_ACTIVE_LOW>;
 		los-gpio = <&gpio1 3 GPIO_ACTIVE_HIGH>;
 	};
@@ -34,7 +34,7 @@
 		compatible = "sff,sfp";
 		i2c-bus = <&i2c1>;
 		tx-fault-gpio = <&gpio1 4 GPIO_ACTIVE_HIGH>;
-		tx-disable-gpio = <&gpio1 5 GPIO_ACTIVE_HIGH>;
+		//tx-disable-gpio = <&gpio1 5 GPIO_ACTIVE_HIGH>;
 		mod-def0-gpio = <&gpio1 6 GPIO_ACTIVE_LOW>;
 		los-gpio = <&gpio1 7 GPIO_ACTIVE_HIGH>;
 	};
@@ -66,6 +66,26 @@
 &i2c_gpio_1 {
 	scl-gpios = <&gpio0 12 (GPIO_ACTIVE_HIGH | GPIO_OPEN_DRAIN)>;
 	sda-gpios = <&gpio0 13 (GPIO_ACTIVE_HIGH | GPIO_OPEN_DRAIN)>;
+};
+
+&gpio1 {
+	/*
+	 * 2x tx-disable pins won't be controlled by the kernel without
+	 * binding of sfp nodes, so need to be set to LOW by gpio-hog
+	 */
+	sfp23_tx_disable {
+		gpio-hog;
+		gpios = <1 GPIO_ACTIVE_HIGH>;
+		output-low;
+		line-name = "sfp23-tx-disable";
+	};
+
+	sfp24_tx_disable {
+		gpio-hog;
+		gpios = <5 GPIO_ACTIVE_HIGH>;
+		output-low;
+		line-name = "sfp24-tx-disable";
+	};
 };
 
 &gpio2 {
@@ -122,14 +142,14 @@
 		INTERNAL_PHY(14)
 		INTERNAL_PHY(15)
 
-		EXTERNAL_PHY(16)
-		EXTERNAL_PHY(17)
-		EXTERNAL_PHY(18)
-		EXTERNAL_PHY(19)
-		EXTERNAL_PHY(20)
-		EXTERNAL_PHY(21)
-		EXTERNAL_PHY(22)
-		EXTERNAL_PHY(23)
+		EXTERNAL_SFP_PHY(16)
+		EXTERNAL_SFP_PHY(17)
+		EXTERNAL_SFP_PHY(18)
+		EXTERNAL_SFP_PHY(19)
+		EXTERNAL_SFP_PHY(20)
+		EXTERNAL_SFP_PHY(21)
+		EXTERNAL_SFP_PHY(22)
+		EXTERNAL_SFP_PHY(23)
 	};
 };
 
