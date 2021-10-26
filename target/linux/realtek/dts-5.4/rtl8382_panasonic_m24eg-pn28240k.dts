@@ -43,6 +43,9 @@
 			linux,code = <KEY_RESTART>;
 		};
 	};*/
+
+	/* Switch-M24eG PN28240K has no RTL8231 chip */
+	/delete-node/ rtl8231-gpio;
 };
 
 &gpio0 {
