@@ -426,6 +426,27 @@ static int rtl8393_read_status(struct phy_device *phydev)
 	return err;
 }
 
+/* Read the link and speed status of the RTL8218FB phy */
+static int rtl8218fb_read_status(struct phy_device *phydev)
+{
+	int err;
+	int phy_addr = phydev->mdio.addr;
+
+	err = genphy_read_status(phydev);
+
+	if ((soc_info.family == RTL8380_FAMILY_ID
+		&& 20 <= phy_addr && phy_addr <= 23) ||
+	    (soc_info.family == RTL8390_FAMILY_ID
+		&& 44 <= phy_addr && phy_addr <= 47)) {
+		if (phydev->link && phydev->port == PORT_FIBRE) {
+			phydev->speed = SPEED_1000;
+			phydev->duplex = DUPLEX_FULL;
+		}
+	}
+
+	return err;
+}
+
 static int rtl8226_read_page(struct phy_device *phydev)
 {
 	return __phy_read(phydev, RTL8XXX_PAGE_SELECT);
@@ -4167,6 +4188,7 @@ static struct phy_driver rtl83xx_phy_driver[] = {
 		.suspend	= genphy_suspend,
 		.resume		= genphy_resume,
 		.set_loopback	= genphy_loopback,
+		.read_status	= rtl8218fb_read_status,
 		.set_port	= rtl8218fb_set_port,
 		.get_port	= rtl8218fb_get_port,
 	},
