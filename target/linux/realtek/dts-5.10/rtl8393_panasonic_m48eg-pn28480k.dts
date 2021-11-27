@@ -4,6 +4,7 @@
 
 #include <dt-bindings/input/input.h>
 #include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/interrupt-controller/irq.h>
 
 / {
 	compatible = "panasonic,m48eg-pn28480k", "realtek,rtl839x-soc";
@@ -165,6 +166,10 @@
 			reg = <0x75>;
 			gpio-controller;
 			#gpio-cells = <2>;
+			interrupt-controller;
+			#interrupt-cells = <2>;
+			interrupt-parent = <&gpio0>;
+			interrupts = <18 IRQ_TYPE_EDGE_FALLING>;
 
 			/* GPIO12 (IO1_4): RTL8218B + RTL8218FB */
 			ext_switch_reset {
