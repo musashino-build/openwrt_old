@@ -29,37 +29,37 @@
 	leds {
 		compatible = "gpio-leds";
 
-		any_collision {
+		led-0 {
 			label = "amber:any_col";
 			gpios = <&gpio2 0 GPIO_ACTIVE_LOW>;
 		};
 
-		led_status_eco_amber: status_eco_amber {
+		led_status_eco_amber: led-1 {
 			label = "amber:status_eco";
 			gpios = <&gpio2 1 GPIO_ACTIVE_HIGH>;
 		};
 
-		led_status_eco_green: status_eco_green {
+		led_status_eco_green: led-2 {
 			label = "green:status_eco";
 			gpios = <&gpio2 2 GPIO_ACTIVE_HIGH>;
 		};
 
-		giga {
+		led-3 {
 			label = "green:giga";
 			gpios = <&gpio2 8 GPIO_ACTIVE_LOW>;
 		};
 
-		100m {
+		led-4 {
 			label = "green:100m";
 			gpios = <&gpio2 9 GPIO_ACTIVE_LOW>;
 		};
 
-		full_duplex {
+		led-5 {
 			label = "green:full";
 			gpios = <&gpio2 10 GPIO_ACTIVE_LOW>;
 		};
 
-		loop_history {
+		led-6 {
 			label = "green:loop_history";
 			gpios = <&gpio2 11 GPIO_ACTIVE_LOW>;
 		};
