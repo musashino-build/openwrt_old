@@ -75,6 +75,11 @@
 		};
 	};
 
+	gpio-restart {
+		compatible = "gpio-restart";
+		gpios = <&gpio2 3 GPIO_ACTIVE_HIGH>;
+	};
+
 	/* Switch-M48eG PN28480K has no RTL8231 chip */
 	/delete-node/ rtl8231-gpio;
 
