@@ -101,7 +101,7 @@
 		gpios = <&gpio2 3 GPIO_ACTIVE_HIGH>;
 	};
 
-	gpio-fan {
+	fan: gpio-fan {
 		compatible = "gpio-fan";
 		gpios = <&gpio0 19 GPIO_ACTIVE_HIGH>;
 		gpio-fan,speed-map = <6000 0
@@ -178,15 +178,17 @@
 		 * ('A' variant supports resolution setting)
 		 */
 		/* Microchip TCN75A (near SoC) */
-		sensor@48 {
+		tsens0: sensor@48 {
 			compatible = "microchip,tcn75";
 			reg = <0x48>;
+			#thermal-sensor-cells = <0>;
 		};
 
 		/* Microchip TCN75A (board, near fan) */
-		sensor@49 {
+		tsens1: sensor@49 {
 			compatible = "microchip,tcn75";
 			reg = <0x49>;
+			#thermal-sensor-cells = <0>;
 		};
 
 		gpio2: gpio@75 {
@@ -257,6 +259,71 @@
 		tx-disable-gpio = <&gpio1 13 GPIO_ACTIVE_HIGH>;
 		mod-def0-gpio = <&gpio1 14 GPIO_ACTIVE_LOW>;
 		los-gpio = <&gpio1 15 GPIO_ACTIVE_HIGH>;
+	};
+
+	thermal-zones {
+		cpu-thermal {
+			polling-delay-passive = <1000>;
+			polling-delay = <2000>;
+
+			thermal-sensors = <&tsens0>;
+
+			trips {
+				cpu_alert: trip-point {
+					temperature = <45000>;
+					hysteresis = <4000>;
+					type = "active";
+				};
+
+				cpu_crit {
+					temperature = <55000>;
+					hysteresis = <1000>;
+					type = "critical";
+				};
+			};
+
+			cooling-maps {
+				map {
+					trip = <&cpu_alert>;
+					cooling-device = <&fan 0 1>;
+				};
+			};
+		};
+
+		/*
+		 * Official Spcifications about Temperature (Environment)
+		 *
+		 * Fan Speed setting:
+		 * - Low : 0-40 celsius
+		 * - High: 0-50 celsius
+		 */
+		sys-thermal {
+			polling-delay-passive = <1000>;
+			polling-delay = <2000>;
+
+			thermal-sensors = <&tsens1>;
+
+			trips {
+				sys_alert: trip-point {
+					temperature = <40000>;
+					hysteresis = <4000>;
+					type = "active";
+				};
+
+				sys_crit {
+					temperature = <50000>;
+					hysteresis = <2000>;
+					type = "critical";
+				};
+			};
+
+			cooling-maps {
+				map {
+					trip = <&sys_alert>;
+					cooling-device = <&fan 0 1>;
+				};
+			};
+		};
 	};
 };
 
