@@ -1744,18 +1744,7 @@ static int rtl83xx_port_fdb_dump(struct dsa_switch *ds, int port,
 	return 0;
 }
 
-static int rtl83xx_port_mdb_prepare(struct dsa_switch *ds, int port,
-					const struct switchdev_obj_port_mdb *mdb)
-{
-	struct rtl838x_switch_priv *priv = ds->priv;
-
-	if (priv->id >= 0x9300)
-		return -EOPNOTSUPP;
-
-	return 0;
-}
-
-static void rtl83xx_port_mdb_add(struct dsa_switch *ds, int port,
+static int rtl83xx_port_mdb_add(struct dsa_switch *ds, int port,
 			const struct switchdev_obj_port_mdb *mdb)
 {
 	struct rtl838x_switch_priv *priv = ds->priv;
@@ -1766,11 +1755,14 @@ static void rtl83xx_port_mdb_add(struct dsa_switch *ds, int port,
 	u64 seed = priv->r->l2_hash_seed(mac, vid);
 	int mc_group;
 
+	if (priv->id >= 0x9300)
+		return -EOPNOTSUPP;
+
 	pr_debug("In %s port %d, mac %llx, vid: %d\n", __func__, port, mac, vid);
 
 	if (priv->is_lagmember[port]) {
 		pr_debug("%s: %d is lag slave. ignore\n", __func__, port);
-		return;
+		return -EINVAL;
 	}
 
 	mutex_lock(&priv->reg_mutex);
@@ -1820,8 +1812,12 @@ static void rtl83xx_port_mdb_add(struct dsa_switch *ds, int port,
 	err = -ENOTSUPP;
 out:
 	mutex_unlock(&priv->reg_mutex);
-	if (err)
+	if (err) {
 		dev_err(ds->dev, "failed to add MDB entry\n");
+		return err;
+	}
+
+	return 0;
 }
 
 int rtl83xx_port_mdb_del(struct dsa_switch *ds, int port,
@@ -2192,7 +2188,6 @@ const struct dsa_switch_ops rtl83xx_switch_ops = {
 	.port_fdb_del		= rtl83xx_port_fdb_del,
 	.port_fdb_dump		= rtl83xx_port_fdb_dump,
 
-	.port_mdb_prepare	= rtl83xx_port_mdb_prepare,
 	.port_mdb_add		= rtl83xx_port_mdb_add,
 	.port_mdb_del		= rtl83xx_port_mdb_del,
 
@@ -2244,7 +2239,6 @@ const struct dsa_switch_ops rtl930x_switch_ops = {
 	.port_fdb_del		= rtl83xx_port_fdb_del,
 	.port_fdb_dump		= rtl83xx_port_fdb_dump,
 
-	.port_mdb_prepare	= rtl83xx_port_mdb_prepare,
 	.port_mdb_add		= rtl83xx_port_mdb_add,
 	.port_mdb_del		= rtl83xx_port_mdb_del,
 
