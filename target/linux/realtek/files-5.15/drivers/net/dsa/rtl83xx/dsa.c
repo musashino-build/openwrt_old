@@ -1380,7 +1380,7 @@ void rtl930x_fast_age(struct dsa_switch *ds, int port)
 
 static int rtl83xx_vlan_filtering(struct dsa_switch *ds, int port,
 				  bool vlan_filtering,
-				  struct switchdev_trans *trans)
+				  struct netlink_ext_ack *extack)
 {
 	struct rtl838x_switch_priv *priv = ds->priv;
 
