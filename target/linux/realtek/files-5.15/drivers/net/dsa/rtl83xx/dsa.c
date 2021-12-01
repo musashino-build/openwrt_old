@@ -1439,20 +1439,25 @@ static int rtl83xx_vlan_prepare(struct dsa_switch *ds, int port,
 	return 0;
 }
 
-static void rtl83xx_vlan_add(struct dsa_switch *ds, int port,
+static int rtl83xx_vlan_add(struct dsa_switch *ds, int port,
 			    const struct switchdev_obj_port_vlan *vlan,
 			    struct netlink_ext_ack *extack)
 {
 	struct rtl838x_vlan_info info;
 	struct rtl838x_switch_priv *priv = ds->priv;
+	int err;
 
 	pr_debug("%s port %d, vid %d, flags %x\n", __func__,
 		port, vlan->vid, vlan->flags);
 
 	if (vlan->vid > 4095) {
 		dev_err(priv->dev, "VLAN out of range: %d", vlan->vid);
-		return;
+		return -ENOTSUPP;
 	}
+
+	err = rtl83xx_vlan_prepare(ds, port, vlan);
+	if (err)
+		return err;
 
 	mutex_lock(&priv->reg_mutex);
 
@@ -1494,6 +1499,8 @@ static void rtl83xx_vlan_add(struct dsa_switch *ds, int port,
 	pr_debug("Tagged ports, VLAN %d: %llx\n", vlan->vid, info.tagged_ports);
 
 	mutex_unlock(&priv->reg_mutex);
+
+	return 0;
 }
 
 static int rtl83xx_vlan_del(struct dsa_switch *ds, int port,
@@ -2178,7 +2185,6 @@ const struct dsa_switch_ops rtl83xx_switch_ops = {
 	.port_fast_age		= rtl83xx_fast_age,
 
 	.port_vlan_filtering	= rtl83xx_vlan_filtering,
-	.port_vlan_prepare	= rtl83xx_vlan_prepare,
 	.port_vlan_add		= rtl83xx_vlan_add,
 	.port_vlan_del		= rtl83xx_vlan_del,
 
@@ -2231,7 +2237,6 @@ const struct dsa_switch_ops rtl930x_switch_ops = {
 	.port_fast_age		= rtl930x_fast_age,
 
 	.port_vlan_filtering	= rtl83xx_vlan_filtering,
-	.port_vlan_prepare	= rtl83xx_vlan_prepare,
 	.port_vlan_add		= rtl83xx_vlan_add,
 	.port_vlan_del		= rtl83xx_vlan_del,
 
