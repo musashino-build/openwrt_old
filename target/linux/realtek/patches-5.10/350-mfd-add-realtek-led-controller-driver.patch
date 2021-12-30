@@ -1,0 +1,28 @@
+--- a/drivers/mfd/Kconfig
++++ b/drivers/mfd/Kconfig
+@@ -1080,6 +1080,15 @@ config MFD_SPMI_PMIC
+ 	  Say M here if you want to include support for the SPMI PMIC
+ 	  series as a module.  The module will be called "qcom-spmi-pmic".
+ 
++config MFD_REALTEK_LED_CTRL
++	tristate "Realtek Global LED Controller"
++	depends on RTL838X
++	select MFD_CORE
++	select LEDS_CLASS
++	help
++	  This enables support for the Global LED Controller on Realtek
++	  RTL838x/RTL839x SoCs.
++
+ config MFD_RDC321X
+ 	tristate "RDC R-321x southbridge"
+ 	select MFD_CORE
+--- a/drivers/mfd/Makefile
++++ b/drivers/mfd/Makefile
+@@ -237,6 +237,7 @@ obj-$(CONFIG_MFD_HI655X_PMIC)   += hi655
+ obj-$(CONFIG_MFD_DLN2)		+= dln2.o
+ obj-$(CONFIG_MFD_RT5033)	+= rt5033.o
+ obj-$(CONFIG_MFD_SKY81452)	+= sky81452.o
++obj-$(CONFIG_MFD_REALTEK_LED_CTRL)	+= realtek-led-ctrl-core.o realtek-led-ctrl-led.o realtek-led-ctrl-miim.o
+ 
+ intel-soc-pmic-objs		:= intel_soc_pmic_core.o intel_soc_pmic_crc.o
+ obj-$(CONFIG_INTEL_SOC_PMIC)	+= intel-soc-pmic.o

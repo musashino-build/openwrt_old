@@ -1,0 +1,26 @@
+--- a/drivers/leds/Kconfig
++++ b/drivers/leds/Kconfig
+@@ -929,6 +929,13 @@ config LEDS_ACER_A500
+ 	  This option enables support for the Power Button LED of
+ 	  Acer Iconia Tab A500.
+ 
++config LEDS_REALTEK_PORT
++	tristate "LED support for port LEDs on Realtek SoCs"
++	depends on LEDS_CLASS && MFD_REALTEK_LED_CTRL
++	help
++	  This option enables support for the port LEDs on Realtek SoC
++	  based devices.
++
+ comment "LED Triggers"
+ source "drivers/leds/trigger/Kconfig"
+ 
+--- a/drivers/leds/Makefile
++++ b/drivers/leds/Makefile
+@@ -79,6 +79,7 @@ obj-$(CONFIG_LEDS_PCA963X)		+= leds-pca9
+ obj-$(CONFIG_LEDS_PM8058)		+= leds-pm8058.o
+ obj-$(CONFIG_LEDS_POWERNV)		+= leds-powernv.o
+ obj-$(CONFIG_LEDS_PWM)			+= leds-pwm.o
++obj-$(CONFIG_LEDS_REALTEK_PORT)		+= leds-realtek-port.o
+ obj-$(CONFIG_LEDS_REGULATOR)		+= leds-regulator.o
+ obj-$(CONFIG_LEDS_S3C24XX)		+= leds-s3c24xx.o
+ obj-$(CONFIG_LEDS_SC27XX_BLTC)		+= leds-sc27xx-bltc.o
