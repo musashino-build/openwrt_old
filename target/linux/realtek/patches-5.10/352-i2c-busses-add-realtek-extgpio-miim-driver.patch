@@ -1,0 +1,27 @@
+--- a/drivers/i2c/busses/Kconfig
++++ b/drivers/i2c/busses/Kconfig
+@@ -934,6 +934,14 @@ config I2C_QUP
+ 	  This driver can also be built as a module.  If so, the module
+ 	  will be called i2c-qup.
+ 
++config I2C_REALTEK_EXTGPIO_MIIM
++	tristate "Realtek MIIM-to-I2C Driver (External GPIO)"
++	depends on MFD_REALTEK_LED_CTRL
++	help
++	  If you say yes to this option, support will be included for the
++	  MIIM (Media Independent Interface Management, =MDIO) interface
++	  of external GPIO on the Realtek RT838x/RTL839x SoC families.
++
+ config I2C_RIIC
+ 	tristate "Renesas RIIC adapter"
+ 	depends on ARCH_RENESAS || COMPILE_TEST
+--- a/drivers/i2c/busses/Makefile
++++ b/drivers/i2c/busses/Makefile
+@@ -93,6 +93,7 @@ obj-$(CONFIG_I2C_PXA_PCI)	+= i2c-pxa-pci
+ obj-$(CONFIG_I2C_QCOM_CCI)	+= i2c-qcom-cci.o
+ obj-$(CONFIG_I2C_QCOM_GENI)	+= i2c-qcom-geni.o
+ obj-$(CONFIG_I2C_QUP)		+= i2c-qup.o
++obj-$(CONFIG_I2C_REALTEK_EXTGPIO_MIIM) += i2c-realtek-extgpio-miim.o
+ obj-$(CONFIG_I2C_RIIC)		+= i2c-riic.o
+ obj-$(CONFIG_I2C_RK3X)		+= i2c-rk3x.o
+ obj-$(CONFIG_I2C_S3C2410)	+= i2c-s3c2410.o
