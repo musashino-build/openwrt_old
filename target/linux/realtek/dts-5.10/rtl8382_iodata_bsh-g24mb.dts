@@ -11,9 +11,12 @@
 	model = "I-O DATA BSH-G24MB";
 
 	aliases {
-		led-boot = &led_sys_loop;
-		led-failsafe = &led_sys_loop;
-		led-upgrade = &led_sys_loop;
+//		led-boot = &pled_16_0;
+//		led-failsafe = &pled_16_0;
+//		led-upgrade = &pled_16_0;
+		led-boot = &sys_led;
+		led-failsafe = &sys_led;
+		led-upgrade = &sys_led;
 	};
 
 	chosen {
@@ -25,7 +28,9 @@
 		reg = <0x0 0x8000000>;
 	};
 
-	leds {
+	/delete-node/ pinmux@1b00a000;
+
+/*	leds {
 		pinctrl-names = "default";
 		pinctrl-0 = <&pinmux_disable_sys_led>;
 		compatible = "gpio-leds";
@@ -36,9 +41,9 @@
 			color = <LED_COLOR_ID_RED>;
 			function = LED_FUNCTION_STATUS;
 		};
-	};
+	};*/
 
-	keys {
+/*	keys {
 		compatible = "gpio-keys-polled";
 		poll-interval = <20>;
 
@@ -47,7 +52,7 @@
 			gpios = <&gpio1 3 GPIO_ACTIVE_LOW>;
 			linux,code = <KEY_RESTART>;
 		};
-	};
+	};*/
 
 	gpio1: rtl8231-gpio {
 		compatible = "realtek,rtl8231-gpio";
@@ -55,6 +60,64 @@
 		gpio-controller;
 		indirect-access-bus-id = <0>;
 	};
+};
+
+&sys_led {
+	status = "okay";
+
+	label = "red:loop_notice";
+	color = <LED_COLOR_ID_RED>;
+	function = LED_FUNCTION_STATUS;
+};
+
+&port_leds {
+	led-set-modes = <0 0 7>;
+
+	pled_16_0: led-16.0 {
+		reg = <16 0>;
+		label = "green:p16.0";
+	};
+
+	led-17.0 {
+		reg = <17 0>;
+		label = "green:p17.0";
+	};
+
+	led-18.0 {
+		reg = <18 0>;
+		label = "green:p18.0";
+	};
+
+	led-19.0 {
+		reg = <19 0>;
+		label = "green:p19.0";
+	};
+
+	led-20.0 {
+		reg = <20 0>;
+		label = "green:p20.0";
+	};
+
+	led-21.0 {
+		reg = <21 0>;
+		label = "green:p21.0";
+	};
+
+	led-22.0 {
+		reg = <22 0>;
+		label = "green:p22.0";
+	};
+
+	led-23.0 {
+		reg = <23 0>;
+		label = "green:p23.0";
+	};
+};
+
+&extgpio_miim {
+	status = "okay";
+
+	realtek,i2c-base-address = <0x10>;
 };
 
 &spi0 {
