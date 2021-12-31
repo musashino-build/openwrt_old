@@ -199,6 +199,25 @@
 		};
 	};
 
+	led-global-controller@1b00a000 {
+		compatible = "realtek,rtl838x-led-controller";
+		reg = <0x1b00a000 0xf4>;
+
+		sys_led: sys-led {
+			status = "disabled";
+		};
+
+		port_leds: port-leds {
+			compatible = "realtek,port-leds";
+		};
+
+		extgpio_miim: extgpio-miim {
+			compatible = "realtek,extgpio-miim-i2c";
+
+			status = "disabled";
+		};
+	};
+
 	ethernet0: ethernet@1b00a300 {
 		compatible = "realtek,rtl838x-eth";
 		reg = <0x1b00a300 0x100>;
