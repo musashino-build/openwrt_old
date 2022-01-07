@@ -185,7 +185,7 @@
 	};
 
 	/* LED_GLB_CTRL */
-	pinmux@1b0000e4 {
+/*	pinmux_led: pinmux@1b0000e4 {
 		compatible = "pinctrl-single";
 		reg = <0x1b0000e4 0x4>;
 
@@ -195,8 +195,21 @@
 		#pinctrl-cells = <2>;
 
 		/* enable GPIO 0 */
-		pinmux_disable_sys_led: disable_sys_led {
+/*		pinmux_disable_sys_led: disable_sys_led {
 			pinctrl-single,bits = <0x0 0x0 0x4000>;
+		};
+	};*/
+
+	led-controller@1b0000e4 {
+		compatible = "realtek,rtl839x-led-controller";
+		reg = <0x1b0000e4 0x178>;
+
+		sys_led: sys-led {
+			status = "disabled";
+		};
+
+		port_leds: port-leds {
+			compatible = "realtek,port-leds";
 		};
 	};
 
