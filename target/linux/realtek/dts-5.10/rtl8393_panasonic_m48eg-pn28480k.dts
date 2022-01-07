@@ -132,6 +132,50 @@
 	};
 };
 
+&port_leds {
+	#port-cells = <2>;
+
+	realtek,led-set-copper = <0 0x00030303 0x03030303>,
+				 <1 0x000c0c0c 0x0c0c0c0c>,
+				 <2 0x00303030 0x30303030>,
+				 <3 0x00c0c0c0 0xc0c0c0c0>;
+
+	realtek,led-set-modes = <0 0 0>,	// set0,led0 -> link/act
+				<1 0 8>,	// set1,led0 -> link 100m
+				<2 0 9>,	// set2,led0 -> link 10m
+				<3 0 11>;	// set3,led0 -> link/act 100m
+
+	led-8.0 {
+		reg = <8 0>;
+		label = "amber:p8.0";
+	};
+
+	led-9.0 {
+		reg = <9 0>;
+		label = "amber:p9.0";
+	};
+
+	led-10.0 {
+		reg = <10 0>;
+		label = "amber:p10.0";
+	};
+
+	led-11.0 {
+		reg = <11 0>;
+		label = "amber:p11.0";
+	};
+
+	led-8.1 {
+		reg = <8 1>;
+		label = "green:p8.1";
+	};
+/*	8.2 is invalid for Switch-M48eG PN28480K (for testing)
+	led-8.2 {
+		reg = <8 2>;
+		label = "blue:p8.2";
+	};*/
+};
+
 &leds {
 	led_status_eco_amber: led-5 {
 		label = "amber:status_eco";
