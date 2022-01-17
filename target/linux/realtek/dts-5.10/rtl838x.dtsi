@@ -169,6 +169,18 @@
 		};
 	};
 
+	tm: sensor@1b000098 {
+		compatible = "realtek,rtl838x-thermal";
+		reg = <0x1b000098 0xc>;
+//		interrupt-parent = <&intc_swcore>;
+//		interrupts = <13>;
+		interrupt-parent = <&intc>;
+		interrupts = <20>;
+		realtek,swcore-interrupt-reg = <&intc_swcore 15>;
+
+		status = "disabled";
+	};
+
 	pinmux: pinmux@1b001000 {
 		compatible = "pinctrl-single";
 		reg = <0x1b001000 0x4>;
@@ -181,6 +193,30 @@
 		enable_uart1: pinmux_enable_uart1 {
 			pinctrl-single,bits = <0x0 0x10 0x10>;
 		};
+	};
+
+	intc_swcore: swcore-intc {
+		compatible = "syscon";
+		reg = <0x1b001100 0x9c>;
+
+		realtek,register-list = <0  0x4  0x4c>, /* link change */
+					<1  0x8  0x50>, /* media change */
+					<2  0xc  0x54>, /* salrn constrt */
+					<3  0x10 0x58>, /* timestamp latch */
+					<4  0x14 0x5c>, /* sds01 link change */
+					<5  0x18 0x60>, /* sds23 link change */
+					<6  0x1c 0x64>, /* sds4 link change */
+					<7  0x20 0x68>, /* sds5 link change */
+					<8  0x24 0x6c>, /* fid salrn constrt */
+					<9  0x28 0x70>, /* acl hit 31_0 */
+					<10 0x2c 0x74>, /* gphy intr */
+					<11 0x30 0x78>, /* gpio 31_0 */
+					<12 0x34 0x7c>, /* gpio 54_32 */
+					<13 0x38 0x80>, /* ext gpio 31_0 */
+					<14 0x3c 0x84>, /* ext gpio 36_32 */
+					<15 0x40 0x8c>, /* tm */
+					<16 0x44 0x90>, /* all port down */
+					<17 0x94 0x98>; /* acl hit 63_32 */
 	};
 
 	/* LED_GLB_CTRL */
