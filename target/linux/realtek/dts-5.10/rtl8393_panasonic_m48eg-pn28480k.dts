@@ -96,7 +96,7 @@
 		};
 
 		/*
-		 * Official Spcifications about Temperature (Environment)
+		 * Official Spcifications about Temperature (System)
 		 *
 		 * Fan Speed setting:
 		 * - Low : 0-40 celsius
