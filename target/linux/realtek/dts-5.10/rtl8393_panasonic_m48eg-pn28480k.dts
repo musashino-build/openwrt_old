@@ -180,7 +180,7 @@
 	interrupt-parent = <&gpio0>;
 	interrupts = <18 IRQ_TYPE_EDGE_FALLING>;
 
-	/* GPIO12 (IO1_4): RTL8218B + RTL8218FB */
+	/* GPIO12 (IO1_4): 5x RTL8218B + RTL8218FB */
 	ext_switch_reset {
 		gpio-hog;
 		gpios = <12 GPIO_ACTIVE_HIGH>;
