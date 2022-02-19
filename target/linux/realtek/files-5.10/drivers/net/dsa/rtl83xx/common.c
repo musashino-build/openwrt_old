@@ -374,7 +374,13 @@ static int __init rtl83xx_mdio_probe(struct rtl838x_switch_priv *priv)
 
 		if (!of_property_read_bool(phy_node, "phy-is-integrated")
 		    && of_property_read_bool(phy_node, "sfp")) {
-			priv->ports[pn].phy = PHY_RTL8214FC;
+			if ((priv->family_id == RTL8380_FAMILY_ID
+			     && 16 <= pn && pn <= 23) ||
+			    (priv->family_id == RTL8390_FAMILY_ID
+			     && 40 <= pn && pn <= 47))
+				priv->ports[pn].phy = PHY_RTL8218FB;
+			else
+				priv->ports[pn].phy = PHY_RTL8214FC;
 			continue;
 		}
 

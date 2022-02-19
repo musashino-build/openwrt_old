@@ -297,6 +297,7 @@ static void rtl83xx_phylink_validate(struct dsa_switch *ds, int port,
 				     struct phylink_link_state *state)
 {
 	struct rtl838x_switch_priv *priv = ds->priv;
+	struct device_node *dn;
 	__ETHTOOL_DECLARE_LINK_MODE_MASK(mask) = { 0, };
 
 	pr_debug("In %s port %d, state is %d", __func__, port, state->interface);
@@ -339,6 +340,20 @@ static void rtl83xx_phylink_validate(struct dsa_switch *ds, int port,
 	/* On the RTL839x family of SoCs, ports 48 to 51 are SFP ports */
 	if (port >= 48 && port <= 51 && priv->family_id == RTL8390_FAMILY_ID)
 		phylink_set(mask, 1000baseX_Full);
+
+	/*
+	 * Fibre (combo) ports on RTL8218FB
+	 * - RTL838x: 20-23
+	 * - RTL839x: 44-47
+	 */
+	dn = of_parse_phandle(dsa_to_port(ds, port)->dn, "phy-handle", 0);
+	if ((priv->family_id == RTL8380_FAMILY_ID
+	     && 20 <= port && port <= 23) ||
+	    (priv->family_id == RTL8390_FAMILY_ID
+	     && 44 <= port && port <= 47))
+		if (dn && of_property_read_bool(dn, "sfp"))
+			phylink_set(mask, 1000baseX_Full);
+	of_node_put(dn);
 
 	phylink_set(mask, 10baseT_Half);
 	phylink_set(mask, 10baseT_Full);
