@@ -22,11 +22,13 @@ struct __attribute__ ((__packed__)) fw_header {
 #define FIRMWARE_838X_8380_1	"rtl838x_phy/rtl838x_8380.fw"
 #define FIRMWARE_838X_8214FC_1	"rtl838x_phy/rtl838x_8214fc.fw"
 #define FIRMWARE_838X_8218b_1	"rtl838x_phy/rtl838x_8218b.fw"
+#define FIRMWARE_838X_8218FB_1	"rtl838x_phy/rtl838x_8218fb.fw"
 
 /* External RTL8218B and RTL8214FC IDs are identical */
 #define PHY_ID_RTL8214C		0x001cc942
 #define PHY_ID_RTL8214FC	0x001cc981
 #define PHY_ID_RTL8218B_E	0x001cc981
+#define PHY_ID_RTL8218FB	0x001cc981
 #define PHY_ID_RTL8218D		0x001cc983
 #define PHY_ID_RTL8218B_I	0x001cca40
 #define PHY_ID_RTL8221B		0x001cc849
