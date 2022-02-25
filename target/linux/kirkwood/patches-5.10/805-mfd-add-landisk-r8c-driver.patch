@@ -1,0 +1,24 @@
+--- a/drivers/mfd/Kconfig
++++ b/drivers/mfd/Kconfig
+@@ -2168,5 +2168,14 @@ config MFD_INTEL_M10_BMC
+ 	  additional drivers must be enabled in order to use the functionality
+ 	  of the device.
+ 
++config MFD_LANDISK_R8C
++	tristate "Renesas R8C MCU on I-O DATA LAN DISK series"
++	depends on SERIAL_DEV_BUS
++	select MFD_CORE
++	help
++	  This option enables common support for the Renesas R8C MCU on
++	  I-O DATA LAN DISK series NAS. It has several functions, such as
++	  LEDs, keys, temperature sensor, fan controller, and others.
++
+ endmenu
+ endif
+--- a/drivers/mfd/Makefile
++++ b/drivers/mfd/Makefile
+@@ -267,3 +267,4 @@ obj-$(CONFIG_MFD_KHADAS_MCU) 	+= khadas-
+ obj-$(CONFIG_SGI_MFD_IOC3)	+= ioc3.o
+ obj-$(CONFIG_MFD_SIMPLE_MFD_I2C)	+= simple-mfd-i2c.o
+ obj-$(CONFIG_MFD_INTEL_M10_BMC)   += intel-m10-bmc.o
++obj-$(CONFIG_MFD_LANDISK_R8C) 	+= landisk-r8c.o
