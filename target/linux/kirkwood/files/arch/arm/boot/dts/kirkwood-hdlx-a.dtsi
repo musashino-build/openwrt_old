@@ -113,35 +113,6 @@
 	status = "okay";
 };
 
-&uart1 {
-	status = "okay";
-
-	/*
-	 * UART1 is used to connect to Renesas R8C/25 MCU
-	 * but there is no driver.
-	 * This MCU has the following functions:
-	 *
-	 * - LED
-	 *   - Status
-	 *   - HDD
-	 *
-	 * - Keys
-	 *   - Reset
-	 *   - Power
-	 *
-	 * - Beep Speaker
-	 *   - controlled by MML (Music Macro Language) syntax
-	 *
-	 * - Temperature sensor
-	 *
-	 * - Fan Control
-	 *
-	 * - Power Off
-	 *
-	 * - Reset
-	 */
-};
-
 &usb0 {
 	#address-cells = <1>;
 	#size-cells = <0>;

@@ -7,6 +7,31 @@
 	compatible = "iodata,hdl-a", "marvell,kirkwood-88f6282", "marvell,kirkwood";
 };
 
+&uart1 {
+	status = "okay";
+
+	mcu {
+		compatible = "iodata,hdl-a-r8c";
+
+		keys {
+			compatible = "iodata,landisk-r8c-keys";
+		};
+
+		/* for Status LED */
+		leds {
+			compatible = "iodata,landisk-r8c-leds";
+		};
+
+		hwmon {
+			compatible = "iodata,landisk-r8c-hwmon";
+		};
+
+		reset {
+			compatible = "iodata,landisk-r8c-reset";
+		};
+	};
+};
+
 &sata {
 	status = "okay";
 	nr-ports = <1>;
