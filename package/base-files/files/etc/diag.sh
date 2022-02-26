@@ -8,6 +8,8 @@ failsafe="$(get_dt_led failsafe)"
 running="$(get_dt_led running)"
 upgrade="$(get_dt_led upgrade)"
 
+[ -r "/etc/diag_platform.sh" ] && . /etc/diag_platform.sh
+
 set_led_state() {
 	status_led="$boot"
 
@@ -49,4 +51,6 @@ set_led_state() {
 
 set_state() {
 	[ -n "$boot" -o -n "$failsafe" -o -n "$running" -o -n "$upgrade" ] && set_led_state "$1"
+
+	type set_led_state_platform &>/dev/null && set_led_state_platform "$1"
 }
