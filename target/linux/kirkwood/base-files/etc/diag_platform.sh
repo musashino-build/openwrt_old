@@ -4,6 +4,7 @@ set_led_state_platform() {
 	local target
 
 	case "$(board_name)" in
+	iodata,hdl-a|\
 	iodata,hdl2-a)
 		target="/dev/ttyS1"
 		[ ! -w "$target" ] && return
