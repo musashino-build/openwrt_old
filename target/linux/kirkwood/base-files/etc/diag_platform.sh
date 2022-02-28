@@ -6,24 +6,24 @@ set_led_state_platform() {
 	case "$(board_name)" in
 	iodata,hdl-a|\
 	iodata,hdl2-a)
-		target="/dev/ttyS1"
+		target="/sys/bus/serial/devices/serial0-0/f1012100.serial:mcu:leds/status_mode"
 		[ ! -w "$target" ] && return
 
 		case "$1" in
 		failsafe)
-			echo ":sts err" > "$target"
+			echo "err" > "$target"
 			;;
 		preinit_regular)
 			# setting "on" required before setting other state
 			# on the first change
-			echo ":sts on" > "$target"
-			echo ":sts notify" > "$target"
+			echo "on" > "$target"
+			echo "notify" > "$target"
 			;;
 		upgrade)
-			echo ":sts notify" > "$target"
+			echo "notify" > "$target"
 			;;
 		done)
-			echo ":sts on" > "$target"
+			echo "on" > "$target"
 			;;
 		esac
 		;;
