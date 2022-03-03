@@ -1,0 +1,15 @@
+--- a/arch/arm/kernel/reboot.c
++++ b/arch/arm/kernel/reboot.c
+@@ -138,9 +138,9 @@ void machine_restart(char *cmd)
+ 	local_irq_disable();
+ 	smp_send_stop();
+ 
+-	if (arm_pm_restart)
+-		arm_pm_restart(reboot_mode, cmd);
+-	else
++//	if (arm_pm_restart)
++//		arm_pm_restart(reboot_mode, cmd);
++//	else
+ 		do_kernel_restart(cmd);
+ 
+ 	/* Give a grace period for failure to restart of 1s */
