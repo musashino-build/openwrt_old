@@ -6,7 +6,7 @@
 #include <dt-bindings/interrupt-controller/irq.h>
 
 / {
-	compatible = "panasonic,m48eg-pn28480k", "realtek,rtl839x-soc";
+	compatible = "panasonic,m48eg-pn28480k", "realtek,rtl8393-soc";
 	model = "Panasonic Switch-M48eG PN28480K";
 
 	aliases {
