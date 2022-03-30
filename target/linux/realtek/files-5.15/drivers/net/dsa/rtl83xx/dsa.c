@@ -1964,11 +1964,11 @@ static void rtl83xx_port_mirror_del(struct dsa_switch *ds, int port,
 	mutex_unlock(&priv->reg_mutex);
 }
 
-static int rtl83xx_port_pre_bridge_flags(struct dsa_switch *ds, int port, unsigned long flags, struct netlink_ext_ack *extack)
+static int rtl83xx_port_pre_bridge_flags(struct dsa_switch *ds, int port, struct switchdev_brport_flags flags, struct netlink_ext_ack *extack)
 {
 	struct rtl838x_switch_priv *priv = ds->priv;
 	unsigned long features = 0;
-	pr_debug("%s: %d %lX\n", __func__, port, flags);
+	pr_debug("%s: %d %lX\n", __func__, port, flags.val);
 	if (priv->r->enable_learning)
 		features |= BR_LEARNING;
 	if (priv->r->enable_flood)
@@ -1977,28 +1977,28 @@ static int rtl83xx_port_pre_bridge_flags(struct dsa_switch *ds, int port, unsign
 		features |= BR_MCAST_FLOOD;
 	if (priv->r->enable_bcast_flood)
 		features |= BR_BCAST_FLOOD;
-	if (flags & ~(features))
+	if (flags.mask & ~(features))
 		return -EINVAL;
 
 	return 0;
 }
 
-static int rtl83xx_port_bridge_flags(struct dsa_switch *ds, int port, unsigned long flags, struct netlink_ext_ack *extack)
+static int rtl83xx_port_bridge_flags(struct dsa_switch *ds, int port, struct switchdev_brport_flags flags, struct netlink_ext_ack *extack)
 {
 	struct rtl838x_switch_priv *priv = ds->priv;
 
-	pr_debug("%s: %d %lX\n", __func__, port, flags);
+	pr_debug("%s: %d %lX\n", __func__, port, flags.val);
 	if (priv->r->enable_learning)
-		priv->r->enable_learning(port, !!(flags & BR_LEARNING));
+		priv->r->enable_learning(port, !!(flags.val & BR_LEARNING));
 
 	if (priv->r->enable_flood)
-		priv->r->enable_flood(port, !!(flags & BR_FLOOD));
+		priv->r->enable_flood(port, !!(flags.val & BR_FLOOD));
 
 	if (priv->r->enable_mcast_flood)
-		priv->r->enable_mcast_flood(port, !!(flags & BR_MCAST_FLOOD));
+		priv->r->enable_mcast_flood(port, !!(flags.val & BR_MCAST_FLOOD));
 
 	if (priv->r->enable_bcast_flood)
-		priv->r->enable_bcast_flood(port, !!(flags & BR_BCAST_FLOOD));
+		priv->r->enable_bcast_flood(port, !!(flags.val & BR_BCAST_FLOOD));
 
 	return 0;
 }
