@@ -9,7 +9,7 @@
 
 / {
 	model = "Sony NCP-HG100/Cellular";
-	compatible = "sony,ncp-hg100-cellular", "qcom,ipq4019";
+	compatible = "sony,ncp-hg100-cellular";
 
 	aliases {
 		led-boot = &led_cloud_green;
