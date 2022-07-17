@@ -7,39 +7,22 @@
 	compatible = "iodata,hdl2-a", "marvell,kirkwood-88f6282", "marvell,kirkwood";
 };
 
-&uart1 {
-	status = "okay";
+&r8c_mcu {
+	compatible = "iodata,hdl2-a-r8c";
+};
 
-	mcu {
-		compatible = "iodata,hdl2-a-r8c";
+&r8c_leds {
+	#address-cells = <1>;
+	#size-cells = <0>;
 
-		keys {
-			compatible = "iodata,landisk-r8c-keys";
-		};
+	led-0 {
+		reg = <0>;
+		label = "red:sata0";
+	};
 
-		leds {
-			compatible = "iodata,landisk-r8c-leds";
-			#address-cells = <1>;
-			#size-cells = <0>;
-
-			led-0 {
-				reg = <0>;
-				label = "red:sata0";
-			};
-
-			led-1 {
-				reg = <1>;
-				label = "red:sata1";
-			};
-		};
-
-		hwmon {
-			compatible = "iodata,landisk-r8c-hwmon";
-		};
-
-		reset {
-			compatible = "iodata,landisk-r8c-reset";
-		};
+	led-1 {
+		reg = <1>;
+		label = "red:sata1";
 	};
 };
 
