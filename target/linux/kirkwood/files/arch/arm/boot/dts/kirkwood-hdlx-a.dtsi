@@ -113,6 +113,30 @@
 	status = "okay";
 };
 
+&uart1 {
+	status = "okay";
+
+	r8c_mcu: mcu {
+		/* specify compatible line on dts of each device */
+
+		keys {
+			compatible = "iodata,landisk-r8c-keys";
+		};
+
+		r8c_leds: leds {
+			compatible = "iodata,landisk-r8c-leds";
+		};
+
+		hwmon {
+			compatible = "iodata,landisk-r8c-hwmon";
+		};
+
+		reset {
+			compatible = "iodata,landisk-r8c-reset";
+		};
+	};
+};
+
 &usb0 {
 	#address-cells = <1>;
 	#size-cells = <0>;
