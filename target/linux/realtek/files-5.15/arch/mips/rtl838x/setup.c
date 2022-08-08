@@ -18,6 +18,7 @@
 #include <linux/of_fdt.h>
 #include <linux/libfdt.h>
 #include <linux/irqchip.h>
+#include <linux/sys_soc.h>
 
 #include <asm/addrspace.h>
 #include <asm/io.h>
@@ -28,7 +29,7 @@
 
 #include "mach-rtl83xx.h"
 
-#define REALTEK_SYS_TYPE_LEN	32
+#define REALTEK_SYS_TYPE_LEN	64
 
 struct rtl83xx_soc_info soc_info;
 static char realtek_sys_type[REALTEK_SYS_TYPE_LEN];
@@ -129,6 +130,39 @@ void __init identify_realtek_soc(void *dtb)
 	soc_info.family = family;
 }
 
+void __init realtek_soc_device_register(void)
+{
+	struct soc_device *soc_dev;
+	struct soc_device_attribute *soc_dev_attr;
+	uint32_t id, family;
+	char suf, rev;
+	int ret;
+
+	ret = sscanf(realtek_sys_type, "Realtek RTL%4x%c Rev.%c (RTL%3xx)",
+		     &id, &suf, &rev, &family);
+	if (ret != 4) {
+		pr_err("failed to scan from realtek_system_type\n");
+		return;
+	}
+
+	soc_dev_attr = kzalloc(sizeof(*soc_dev_attr), GFP_KERNEL);
+	if (!soc_dev_attr)
+		return;
+
+	soc_dev_attr->soc_id = kasprintf(GFP_KERNEL, "%04x", id);
+	soc_dev_attr->family = kasprintf(GFP_KERNEL, "%04x", family << 4);
+	soc_dev_attr->revision = kasprintf(GFP_KERNEL, "%c", rev);
+
+	soc_dev = soc_device_register(soc_dev_attr);
+	if (IS_ERR(soc_dev)) {
+		kfree(soc_dev_attr->soc_id);
+		kfree(soc_dev_attr->family);
+		kfree(soc_dev_attr->revision);
+		kfree(soc_dev_attr);
+		pr_err("failed to register soc_device\n");
+	}
+}
+
 void __init plat_mem_setup(void)
 {
 	void *dtb;
@@ -146,6 +180,12 @@ void __init plat_mem_setup(void)
 	 * parsed resulting in our memory appearing
 	 */
 	__dt_setup_arch(dtb);
+
+	/*
+	 * kasprintf is not available before memory initialization,
+	 * so call soc_device registration on late_time_init.
+	 */
+	late_time_init = realtek_soc_device_register;
 }
 
 void plat_time_init_fallback(void)
