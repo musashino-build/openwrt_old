@@ -33,8 +33,6 @@ Signed-off-by: Bartosz Golaszewski <brgl@bgdev.pl>
 
 (limited to 'drivers/gpio/gpio-realtek-otto.c')
 
-diff --git a/drivers/gpio/gpio-realtek-otto.c b/drivers/gpio/gpio-realtek-otto.c
-index 63dcf42f7c206..d6418f89d3f63 100644
 --- a/drivers/gpio/gpio-realtek-otto.c
 +++ b/drivers/gpio/gpio-realtek-otto.c
 @@ -46,10 +46,20 @@
@@ -75,7 +73,7 @@ index 63dcf42f7c206..d6418f89d3f63 100644
  };
  
  /* Expand with more flags as devices with other quirks are added */
-@@ -101,14 +112,22 @@ static struct realtek_gpio_ctrl *irq_data_to_ctrl(struct irq_data *data)
+@@ -101,14 +112,22 @@ static struct realtek_gpio_ctrl *irq_dat
   * port. The two interrupt mask registers store two bits per GPIO, so use u16
   * values.
   */
@@ -102,7 +100,7 @@ index 63dcf42f7c206..d6418f89d3f63 100644
  }
  
  /*
-@@ -119,66 +138,67 @@ static unsigned int realtek_gpio_port_offset_u16(unsigned int port)
+@@ -119,64 +138,65 @@ static unsigned int realtek_gpio_port_of
   * per GPIO, so use u16 values. The first register contains ports 1 and 0, the
   * second ports 3 and 2.
   */
@@ -184,8 +182,6 @@ index 63dcf42f7c206..d6418f89d3f63 100644
  	unsigned long flags;
 -	u16 m;
  
- 	gpiochip_enable_irq(&ctrl->gc, line);
- 
  	raw_spin_lock_irqsave(&ctrl->lock, flags);
 -	m = ctrl->intr_mask[port];
 -	m |= realtek_gpio_imr_bits(port_pin, REALTEK_GPIO_IMR_LINE_MASK);
@@ -196,7 +192,7 @@ index 63dcf42f7c206..d6418f89d3f63 100644
  	raw_spin_unlock_irqrestore(&ctrl->lock, flags);
  }
  
-@@ -186,16 +206,11 @@ static void realtek_gpio_irq_mask(struct irq_data *data)
+@@ -184,16 +204,11 @@ static void realtek_gpio_irq_mask(struct
  {
  	struct realtek_gpio_ctrl *ctrl = irq_data_to_ctrl(data);
  	unsigned int line = irqd_to_hwirq(data);
@@ -213,9 +209,9 @@ index 63dcf42f7c206..d6418f89d3f63 100644
 +	ctrl->intr_mask[line] = 0;
 +	realtek_gpio_update_line_imr(ctrl, line);
  	raw_spin_unlock_irqrestore(&ctrl->lock, flags);
+ }
  
- 	gpiochip_disable_irq(&ctrl->gc, line);
-@@ -205,10 +220,8 @@ static int realtek_gpio_irq_set_type(struct irq_data *data, unsigned int flow_ty
+@@ -201,10 +216,8 @@ static int realtek_gpio_irq_set_type(str
  {
  	struct realtek_gpio_ctrl *ctrl = irq_data_to_ctrl(data);
  	unsigned int line = irqd_to_hwirq(data);
@@ -227,7 +223,7 @@ index 63dcf42f7c206..d6418f89d3f63 100644
  
  	switch (flow_type & IRQ_TYPE_SENSE_MASK) {
  	case IRQ_TYPE_EDGE_FALLING:
-@@ -227,11 +240,8 @@ static int realtek_gpio_irq_set_type(struct irq_data *data, unsigned int flow_ty
+@@ -223,11 +236,8 @@ static int realtek_gpio_irq_set_type(str
  	irq_set_handler_locked(data, handle_edge_irq);
  
  	raw_spin_lock_irqsave(&ctrl->lock, flags);
@@ -241,7 +237,7 @@ index 63dcf42f7c206..d6418f89d3f63 100644
  	raw_spin_unlock_irqrestore(&ctrl->lock, flags);
  
  	return 0;
-@@ -242,28 +252,21 @@ static void realtek_gpio_irq_handler(struct irq_desc *desc)
+@@ -238,28 +248,21 @@ static void realtek_gpio_irq_handler(str
  	struct gpio_chip *gc = irq_desc_get_handler_data(desc);
  	struct realtek_gpio_ctrl *ctrl = gpiochip_get_data(gc);
  	struct irq_chip *irq_chip = irq_desc_get_chip(desc);
@@ -275,7 +271,7 @@ index 63dcf42f7c206..d6418f89d3f63 100644
  }
  
  static int realtek_gpio_irq_set_affinity(struct irq_data *data,
-@@ -271,12 +274,10 @@ static int realtek_gpio_irq_set_affinity(struct irq_data *data,
+@@ -267,12 +270,10 @@ static int realtek_gpio_irq_set_affinity
  {
  	struct realtek_gpio_ctrl *ctrl = irq_data_to_ctrl(data);
  	unsigned int line = irqd_to_hwirq(data);
@@ -289,7 +285,7 @@ index 63dcf42f7c206..d6418f89d3f63 100644
  
  	if (!ctrl->cpumask_base)
  		return -ENXIO;
-@@ -284,15 +285,15 @@ static int realtek_gpio_irq_set_affinity(struct irq_data *data,
+@@ -280,15 +281,15 @@ static int realtek_gpio_irq_set_affinity
  	raw_spin_lock_irqsave(&ctrl->lock, flags);
  
  	for_each_cpu(cpu, &ctrl->cpu_irq_maskable) {
@@ -310,7 +306,7 @@ index 63dcf42f7c206..d6418f89d3f63 100644
  	}
  
  	raw_spin_unlock_irqrestore(&ctrl->lock, flags);
-@@ -305,16 +306,17 @@ static int realtek_gpio_irq_set_affinity(struct irq_data *data,
+@@ -301,16 +302,17 @@ static int realtek_gpio_irq_set_affinity
  static int realtek_gpio_irq_init(struct gpio_chip *gc)
  {
  	struct realtek_gpio_ctrl *ctrl = gpiochip_get_data(gc);
@@ -335,7 +331,7 @@ index 63dcf42f7c206..d6418f89d3f63 100644
  
  	return 0;
  }
-@@ -387,12 +389,14 @@ static int realtek_gpio_probe(struct platform_device *pdev)
+@@ -381,12 +383,14 @@ static int realtek_gpio_probe(struct pla
  
  	if (dev_flags & GPIO_PORTS_REVERSED) {
  		bgpio_flags = 0;
@@ -354,6 +350,3 @@ index 63dcf42f7c206..d6418f89d3f63 100644
  	}
  
  	err = bgpio_init(&ctrl->gc, dev, 4,
--- 
-cgit 
-
