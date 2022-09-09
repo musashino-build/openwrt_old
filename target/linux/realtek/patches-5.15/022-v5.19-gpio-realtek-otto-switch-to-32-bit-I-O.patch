@@ -1,7 +1,7 @@
 From ee0175b3b44288c74d5292c2a9c2c154f6c0317e Mon Sep 17 00:00:00 2001
 From: Sander Vanheule <sander@svanheule.net>
 Date: Sun, 7 Aug 2022 21:21:15 +0200
-Subject: [PATCH] gpio: realtek-otto: switch to 32-bit I/O
+Subject: gpio: realtek-otto: switch to 32-bit I/O
 
 By using 16-bit I/O on the GPIO peripheral, which is apparently not safe
 on MIPS, the IMR can end up containing garbage. This then results in
@@ -27,16 +27,14 @@ Signed-off-by: Sander Vanheule <sander@svanheule.net>
 Cc: Paul Cercueil <paul@crapouillou.net>
 Reviewed-by: Linus Walleij <linus.walleij@linaro.org>
 Signed-off-by: Bartosz Golaszewski <brgl@bgdev.pl>
-
-Update patch for missing upstream changes:
-  - commit a01a40e33499 ("gpio: realtek-otto: Make the irqchip immutable")
-  - commit dbd1c54fc820 ("gpio: Bulk conversion to generic_handle_domain_irq()")
-Signed-off-by: Sander Vanheule <sander@svanheule.net>
-
 ---
- drivers/gpio/gpio-realtek-otto.c | 166 ++++++++++++++++---------------
+ drivers/gpio/gpio-realtek-otto.c | 166 ++++++++++++++++++++-------------------
  1 file changed, 85 insertions(+), 81 deletions(-)
 
+(limited to 'drivers/gpio/gpio-realtek-otto.c')
+
+diff --git a/drivers/gpio/gpio-realtek-otto.c b/drivers/gpio/gpio-realtek-otto.c
+index 63dcf42f7c206..d6418f89d3f63 100644
 --- a/drivers/gpio/gpio-realtek-otto.c
 +++ b/drivers/gpio/gpio-realtek-otto.c
 @@ -46,10 +46,20 @@
@@ -77,26 +75,26 @@ Signed-off-by: Sander Vanheule <sander@svanheule.net>
  };
  
  /* Expand with more flags as devices with other quirks are added */
-@@ -101,14 +112,22 @@ static struct realtek_gpio_ctrl *irq_dat
+@@ -101,14 +112,22 @@ static struct realtek_gpio_ctrl *irq_data_to_ctrl(struct irq_data *data)
   * port. The two interrupt mask registers store two bits per GPIO, so use u16
   * values.
   */
 -static unsigned int realtek_gpio_port_offset_u8(unsigned int port)
 +static u32 realtek_gpio_bank_read_swapped(void __iomem *reg)
-+{
-+	return ioread32be(reg);
-+}
-+
-+static void realtek_gpio_bank_write_swapped(void __iomem *reg, u32 value)
  {
 -	return port;
-+	iowrite32be(value, reg);
++	return ioread32be(reg);
  }
  
 -static unsigned int realtek_gpio_port_offset_u16(unsigned int port)
-+static unsigned int realtek_gpio_line_imr_pos_swapped(unsigned int line)
++static void realtek_gpio_bank_write_swapped(void __iomem *reg, u32 value)
  {
 -	return 2 * port;
++	iowrite32be(value, reg);
++}
++
++static unsigned int realtek_gpio_line_imr_pos_swapped(unsigned int line)
++{
 +	unsigned int port_pin = line % 8;
 +	unsigned int port = line / 8;
 +
@@ -104,7 +102,7 @@ Signed-off-by: Sander Vanheule <sander@svanheule.net>
  }
  
  /*
-@@ -119,64 +138,65 @@ static unsigned int realtek_gpio_port_of
+@@ -119,66 +138,67 @@ static unsigned int realtek_gpio_port_offset_u16(unsigned int port)
   * per GPIO, so use u16 values. The first register contains ports 1 and 0, the
   * second ports 3 and 2.
   */
@@ -186,6 +184,8 @@ Signed-off-by: Sander Vanheule <sander@svanheule.net>
  	unsigned long flags;
 -	u16 m;
  
+ 	gpiochip_enable_irq(&ctrl->gc, line);
+ 
  	raw_spin_lock_irqsave(&ctrl->lock, flags);
 -	m = ctrl->intr_mask[port];
 -	m |= realtek_gpio_imr_bits(port_pin, REALTEK_GPIO_IMR_LINE_MASK);
@@ -196,7 +196,7 @@ Signed-off-by: Sander Vanheule <sander@svanheule.net>
  	raw_spin_unlock_irqrestore(&ctrl->lock, flags);
  }
  
-@@ -184,16 +204,11 @@ static void realtek_gpio_irq_mask(struct
+@@ -186,16 +206,11 @@ static void realtek_gpio_irq_mask(struct irq_data *data)
  {
  	struct realtek_gpio_ctrl *ctrl = irq_data_to_ctrl(data);
  	unsigned int line = irqd_to_hwirq(data);
@@ -213,9 +213,9 @@ Signed-off-by: Sander Vanheule <sander@svanheule.net>
 +	ctrl->intr_mask[line] = 0;
 +	realtek_gpio_update_line_imr(ctrl, line);
  	raw_spin_unlock_irqrestore(&ctrl->lock, flags);
- }
  
-@@ -201,10 +216,8 @@ static int realtek_gpio_irq_set_type(str
+ 	gpiochip_disable_irq(&ctrl->gc, line);
+@@ -205,10 +220,8 @@ static int realtek_gpio_irq_set_type(struct irq_data *data, unsigned int flow_ty
  {
  	struct realtek_gpio_ctrl *ctrl = irq_data_to_ctrl(data);
  	unsigned int line = irqd_to_hwirq(data);
@@ -227,7 +227,7 @@ Signed-off-by: Sander Vanheule <sander@svanheule.net>
  
  	switch (flow_type & IRQ_TYPE_SENSE_MASK) {
  	case IRQ_TYPE_EDGE_FALLING:
-@@ -223,11 +236,8 @@ static int realtek_gpio_irq_set_type(str
+@@ -227,11 +240,8 @@ static int realtek_gpio_irq_set_type(struct irq_data *data, unsigned int flow_ty
  	irq_set_handler_locked(data, handle_edge_irq);
  
  	raw_spin_lock_irqsave(&ctrl->lock, flags);
@@ -241,13 +241,12 @@ Signed-off-by: Sander Vanheule <sander@svanheule.net>
  	raw_spin_unlock_irqrestore(&ctrl->lock, flags);
  
  	return 0;
-@@ -238,31 +248,24 @@ static void realtek_gpio_irq_handler(str
+@@ -242,28 +252,21 @@ static void realtek_gpio_irq_handler(struct irq_desc *desc)
  	struct gpio_chip *gc = irq_desc_get_handler_data(desc);
  	struct realtek_gpio_ctrl *ctrl = gpiochip_get_data(gc);
  	struct irq_chip *irq_chip = irq_desc_get_chip(desc);
 -	unsigned int lines_done;
 -	unsigned int port_pin_count;
- 	unsigned int irq;
  	unsigned long status;
  	int offset;
  
@@ -256,15 +255,12 @@ Signed-off-by: Sander Vanheule <sander@svanheule.net>
 -	for (lines_done = 0; lines_done < gc->ngpio; lines_done += 8) {
 -		status = realtek_gpio_read_isr(ctrl, lines_done / 8);
 -		port_pin_count = min(gc->ngpio - lines_done, 8U);
--		for_each_set_bit(offset, &status, port_pin_count) {
--			irq = irq_find_mapping(gc->irq.domain, offset + lines_done);
--			generic_handle_irq(irq);
--		}
+-		for_each_set_bit(offset, &status, port_pin_count)
+-			generic_handle_domain_irq(gc->irq.domain, offset + lines_done);
+-	}
 +	status = realtek_gpio_read_isr(ctrl);
-+	for_each_set_bit(offset, &status, gc->ngpio) {
-+		irq = irq_find_mapping(gc->irq.domain, offset);
-+		generic_handle_irq(irq);
- 	}
++	for_each_set_bit(offset, &status, gc->ngpio)
++		generic_handle_domain_irq(gc->irq.domain, offset);
  
  	chained_irq_exit(irq_chip, desc);
  }
@@ -279,7 +275,7 @@ Signed-off-by: Sander Vanheule <sander@svanheule.net>
  }
  
  static int realtek_gpio_irq_set_affinity(struct irq_data *data,
-@@ -270,12 +273,10 @@ static int realtek_gpio_irq_set_affinity
+@@ -271,12 +274,10 @@ static int realtek_gpio_irq_set_affinity(struct irq_data *data,
  {
  	struct realtek_gpio_ctrl *ctrl = irq_data_to_ctrl(data);
  	unsigned int line = irqd_to_hwirq(data);
@@ -293,7 +289,7 @@ Signed-off-by: Sander Vanheule <sander@svanheule.net>
  
  	if (!ctrl->cpumask_base)
  		return -ENXIO;
-@@ -283,15 +284,15 @@ static int realtek_gpio_irq_set_affinity
+@@ -284,15 +285,15 @@ static int realtek_gpio_irq_set_affinity(struct irq_data *data,
  	raw_spin_lock_irqsave(&ctrl->lock, flags);
  
  	for_each_cpu(cpu, &ctrl->cpu_irq_maskable) {
@@ -314,10 +310,10 @@ Signed-off-by: Sander Vanheule <sander@svanheule.net>
  	}
  
  	raw_spin_unlock_irqrestore(&ctrl->lock, flags);
-@@ -305,22 +306,23 @@ static int realtek_gpio_irq_init(struct
+@@ -305,16 +306,17 @@ static int realtek_gpio_irq_set_affinity(struct irq_data *data,
+ static int realtek_gpio_irq_init(struct gpio_chip *gc)
  {
  	struct realtek_gpio_ctrl *ctrl = gpiochip_get_data(gc);
- 	void __iomem *irq_cpu_mask;
 -	unsigned int port;
 +	u32 mask_all = GENMASK(gc->ngpio - 1, 0);
 +	unsigned int line;
@@ -326,33 +322,20 @@ Signed-off-by: Sander Vanheule <sander@svanheule.net>
 -	for (port = 0; (port * 8) < gc->ngpio; port++) {
 -		realtek_gpio_write_imr(ctrl, port, 0, 0);
 -		realtek_gpio_clear_isr(ctrl, port, GENMASK(7, 0));
--
--		/*
--		 * Uniprocessor builds assume a mask always contains one CPU,
--		 * so only start the loop if we have at least one maskable CPU.
--		 */
--		if(!cpumask_empty(&ctrl->cpu_irq_maskable)) {
--			for_each_cpu(cpu, &ctrl->cpu_irq_maskable) {
--				irq_cpu_mask = realtek_gpio_irq_cpu_mask(ctrl, port, cpu);
--				iowrite8(GENMASK(7, 0), irq_cpu_mask);
--			}
 +	for (line = 0; line < gc->ngpio; line++)
 +		realtek_gpio_update_line_imr(ctrl, line);
-+
+ 
+-		for_each_cpu(cpu, &ctrl->cpu_irq_maskable)
+-			iowrite8(GENMASK(7, 0), realtek_gpio_irq_cpu_mask(ctrl, port, cpu));
+-	}
 +	realtek_gpio_clear_isr(ctrl, mask_all);
 +
-+	/*
-+	 * Uniprocessor builds assume a mask always contains one CPU,
-+	 * so only start the loop if we have at least one maskable CPU.
-+	 */
-+	if(!cpumask_empty(&ctrl->cpu_irq_maskable)) {
-+		for_each_cpu(cpu, &ctrl->cpu_irq_maskable) {
-+			irq_cpu_mask = realtek_gpio_irq_cpu_mask(ctrl, cpu);
-+			ctrl->bank_write(irq_cpu_mask, mask_all);
- 		}
- 	}
++	for_each_cpu(cpu, &ctrl->cpu_irq_maskable)
++		ctrl->bank_write(realtek_gpio_irq_cpu_mask(ctrl, cpu), mask_all);
  
-@@ -393,12 +395,14 @@ static int realtek_gpio_probe(struct pla
+ 	return 0;
+ }
+@@ -387,12 +389,14 @@ static int realtek_gpio_probe(struct platform_device *pdev)
  
  	if (dev_flags & GPIO_PORTS_REVERSED) {
  		bgpio_flags = 0;
@@ -371,3 +354,6 @@ Signed-off-by: Sander Vanheule <sander@svanheule.net>
  	}
  
  	err = bgpio_init(&ctrl->gc, dev, 4,
+-- 
+cgit 
+
