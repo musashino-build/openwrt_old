@@ -1988,16 +1988,16 @@ static int rtl83xx_port_bridge_flags(struct dsa_switch *ds, int port, struct swi
 	struct rtl838x_switch_priv *priv = ds->priv;
 
 	pr_debug("%s: %d %lX\n", __func__, port, flags.val);
-	if (priv->r->enable_learning)
+	if (priv->r->enable_learning && (flags.mask & BR_LEARNING))
 		priv->r->enable_learning(port, !!(flags.val & BR_LEARNING));
 
-	if (priv->r->enable_flood)
+	if (priv->r->enable_flood && (flags.mask & BR_FLOOD))
 		priv->r->enable_flood(port, !!(flags.val & BR_FLOOD));
 
-	if (priv->r->enable_mcast_flood)
+	if (priv->r->enable_mcast_flood && (flags.mask & BR_MCAST_FLOOD))
 		priv->r->enable_mcast_flood(port, !!(flags.val & BR_MCAST_FLOOD));
 
-	if (priv->r->enable_bcast_flood)
+	if (priv->r->enable_bcast_flood && (flags.mask & BR_BCAST_FLOOD))
 		priv->r->enable_bcast_flood(port, !!(flags.val & BR_BCAST_FLOOD));
 
 	return 0;
