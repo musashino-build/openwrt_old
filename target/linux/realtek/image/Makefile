@@ -3,8 +3,13 @@
 include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/image.mk
 
-KERNEL_LOADADDR = 0x80000000
-KERNEL_ENTRY = 0x80000400
+loadaddr-y := 0x80000000
+loadaddr-$(CONFIG_LINUX_5_15) := 0x80100000
+entryaddr-y := 0x80000400
+entryaddr-$(CONFIG_LINUX_5_15) := 0x80100400
+
+KERNEL_LOADADDR = $(loadaddr-y)
+KERNEL_ENTRY = $(entryaddr-y)
 
 DEVICE_VARS += \
         CAMEO_BOARD_VERSION \
