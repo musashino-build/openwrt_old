@@ -5,7 +5,8 @@
 
 / {
 	chosen {
-		bootargs = "console=ttyS0,38400";
+		bootargs = "earlycon";
+		stdout-path="serial0:38400n8";
 	};
 
 	memory@0 {

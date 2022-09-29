@@ -160,9 +160,6 @@ static __init void realtek_soc_identify(void)
 static __init const void *realtek_fixup_fdt(const void *fdt,
 					    const void *match_data)
 {
-	/* uart0 */
-	setup_8250_early_printk_port(0xb8002000, 2, 0);
-
 	realtek_soc_identify();
 	system_type = soc_info.name;
 
