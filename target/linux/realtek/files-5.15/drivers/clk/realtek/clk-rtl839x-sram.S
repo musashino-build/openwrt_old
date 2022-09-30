@@ -32,7 +32,7 @@ rtcl_839x_dram_start:
 .ent	rtcl_839x_dram_set_rate
 rtcl_839x_dram_set_rate:
 
-#ifdef CONFIG_RTL839X
+#ifdef CONFIG_SOC_RTL839X
 
 	/* disable MIPS 34K branch and return prediction */
         mfc0    rCP0, CP0_CONFIG, 7
@@ -123,7 +123,7 @@ wait_pllclock:
 	jr	$ra
 	nop
 
-#else /* !CONFIG_RTL839X */
+#else /* !CONFIG_SOC_RTL839X */
 
 	jr	$ra
 	nop

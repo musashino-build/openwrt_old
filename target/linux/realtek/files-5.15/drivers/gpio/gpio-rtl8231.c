@@ -4,7 +4,7 @@
 #include <linux/module.h>
 #include <linux/platform_device.h>
 #include <linux/delay.h>
-#include <asm/mach-rtl838x/mach-rtl83xx.h>
+#include <asm/mach-realtek/mach-rtl83xx.h>
 
 /* RTL8231 registers for LED control */
 #define RTL8231_LED_FUNC0			0x0000

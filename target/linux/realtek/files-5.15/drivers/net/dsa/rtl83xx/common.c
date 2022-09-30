@@ -9,7 +9,7 @@
 #include <linux/inetdevice.h>
 #include <linux/rhashtable.h>
 #include <linux/of_net.h>
-#include <asm/mach-rtl838x/mach-rtl83xx.h>
+#include <asm/mach-realtek/mach-rtl83xx.h>
 
 #include "rtl83xx.h"
 
