@@ -1,0 +1,84 @@
+--- a/arch/mips/Kconfig
++++ b/arch/mips/Kconfig
+@@ -626,24 +626,23 @@ config RALINK
+ 	select RESET_CONTROLLER
+ 
+ config MACH_REALTEK_RTL
+-	bool "Realtek RTL838x/RTL839x based machines"
++	bool "Realtek RTL83xx/RTL93xx based machines"
+ 	select MIPS_GENERIC
+ 	select DMA_NONCOHERENT
+ 	select IRQ_MIPS_CPU
+-	select CSRC_R4K
+-	select CEVT_R4K
+ 	select SYS_HAS_CPU_MIPS32_R1
+ 	select SYS_HAS_CPU_MIPS32_R2
+ 	select SYS_SUPPORTS_BIG_ENDIAN
+ 	select SYS_SUPPORTS_32BIT_KERNEL
++	select SYS_SUPPORTS_HIGHMEM
+ 	select SYS_SUPPORTS_MIPS16
+-	select SYS_SUPPORTS_MULTITHREADING
+-	select SYS_SUPPORTS_VPE_LOADER
+ 	select SYS_HAS_EARLY_PRINTK
+ 	select SYS_HAS_EARLY_PRINTK_8250
+ 	select USE_GENERIC_EARLY_PRINTK_8250
+ 	select BOOT_RAW
+ 	select PINCTRL
++	select ARCH_HAS_RESET_CONTROLLER
++	select RESET_CONTROLLER
+ 	select USE_OF
+ 
+ config SGI_IP22
+--- a/arch/mips/generic/Kconfig
++++ b/arch/mips/generic/Kconfig
+@@ -125,3 +125,50 @@ config VIRT_BOARD_RANCHU
+ 	  the support for the same set of virtual devices.
+ 
+ endif
++
++if MACH_REALTEK_RTL
++
++choice
++	prompt "Realtek SoC selection"
++	default SOC_RTL838X
++	help
++	  Select Realtek MIPS SoC family.
++
++	config SOC_RTL838X
++		bool "Realtek RTL838X based platforms"
++		depends on MACH_REALTEK_RTL
++		select CPU_SUPPORTS_CPUFREQ
++		select MIPS_EXTERNAL_TIMER
++
++	config SOC_RTL839X
++		bool "Realtek RTL839X based platforms"
++		depends on MACH_REALTEK_RTL
++		select CPU_SUPPORTS_CPUFREQ
++		select MIPS_EXTERNAL_TIMER
++		select SYS_SUPPORTS_MULTITHREADING
++
++	config SOC_RTL930X
++		bool "Realtek RTL930X based platforms"
++		depends on MACH_REALTEK_RTL
++		select MIPS_CPU_SCACHE
++		select CSRC_R4K
++		select CEVT_RTL9300
++		select SYS_SUPPORTS_MULTITHREADING
++
++	config SOC_RTL931X
++		bool "Realtek RTL931X based platforms"
++		depends on MACH_REALTEK_RTL
++		select MIPS_CPU_SCACHE
++		select MIPS_GIC
++		select COMMON_CLK
++		select CLKSRC_MIPS_GIC
++		select CSRC_R4K
++		select CEVT_RTL9300
++		select SYS_SUPPORTS_VPE_LOADER
++		select SYS_SUPPORTS_SMP
++		select SYS_SUPPORTS_MIPS_CPS
++		select SYS_SUPPORTS_MULTITHREADING
++
++endchoice
++
++endif
