@@ -52,3 +52,15 @@ Submitted-by: Birger Koblitz <git@birger-koblitz.de>
  #ifdef CONFIG_CEVT_R4K
  	return r4k_clockevent_init();
  #else
+--- a/arch/mips/Kconfig
++++ b/arch/mips/Kconfig
+@@ -1112,6 +1112,9 @@ config CEVT_GT641XX
+ config CEVT_R4K
+ 	bool
+ 
++config CEVT_RTL9300
++	bool
++
+ config CEVT_SB1250
+ 	bool
+ 
