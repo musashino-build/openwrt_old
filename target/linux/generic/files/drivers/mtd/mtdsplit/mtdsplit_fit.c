@@ -208,6 +208,13 @@ mtdsplit_fit_parse(struct mtd_info *mtd,
 	const void *img_data;
 	void *fit;
 
+	/*
+	 * use "partitions" node when the parser is called for
+	 * parsing top-level partitions, instead of mtd's node
+	 */
+	if (!mtd_is_partition(mtd))
+		np = of_get_child_by_name(np, "partitions");
+
 	of_property_read_string(np, "openwrt,cmdline-match", &cmdline_match);
 	if (cmdline_match && !strstr(saved_command_line, cmdline_match))
 		return -ENODEV;
