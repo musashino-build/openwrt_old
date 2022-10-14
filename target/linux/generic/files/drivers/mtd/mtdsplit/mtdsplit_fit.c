@@ -219,6 +219,11 @@ mtdsplit_fit_parse(struct mtd_info *mtd,
 	if (cmdline_match && !strstr(saved_command_line, cmdline_match))
 		return -ENODEV;
 
+	/* check NVMEM cell for bootindex */
+	ret = mtd_check_nvmem_bootindex(np);
+	if (ret)
+		return ret;
+
 	of_property_read_u32(np, "openwrt,fit-offset", &offset_start);
 
 	hdr_len = sizeof(struct fdt_header);
