@@ -1,0 +1,10 @@
+--- a/drivers/nvmem/u-boot-env.c
++++ b/drivers/nvmem/u-boot-env.c
+@@ -177,6 +177,7 @@ err_out:
+ static int u_boot_env_probe(struct platform_device *pdev)
+ {
+ 	struct nvmem_config config = {
++		.id = NVMEM_DEVID_AUTO,
+ 		.name = "u-boot-env",
+ 		.reg_read = u_boot_env_read,
+ 	};
