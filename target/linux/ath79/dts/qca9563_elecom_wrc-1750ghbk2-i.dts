@@ -35,9 +35,13 @@
 	};
 
 	partition@fe0000 {
+		compatible = "keyvalue,env";
 		label = "hwconfig";
 		reg = <0xfe0000 0x010000>;
 		read-only;
+
+		env,magic = <0x584d4445>;
+		env,data-offset = <0xc>;
 	};
 
 	art: partition@ff0000 {

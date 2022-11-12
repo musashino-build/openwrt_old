@@ -134,9 +134,18 @@
 			};
 
 			partition@30000 {
+				compatible = "fixed-partitions";
 				label = "u-boot-env";
 				reg = <0x30000 0x10000>;
 				read-only;
+				#address-cells = <1>;
+				#size-cells = <1>;
+
+				partition@0 {
+					compatible = "u-boot,env";
+					label = "env-data";
+					reg = <0x0 0x1000>;
+				};
 			};
 
 			factory: partition@40000 {
@@ -164,9 +173,12 @@
 			};
 
 			partition@fe0000 {
+				compatible = "keyvalue,env";
 				label = "board_data";
 				reg = <0xfe0000 0x10000>;
 				read-only;
+
+				env,divided-by-lf;
 			};
 		};
 	};
