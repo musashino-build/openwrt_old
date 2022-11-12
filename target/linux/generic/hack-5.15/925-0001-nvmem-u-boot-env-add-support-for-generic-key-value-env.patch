@@ -1,0 +1,219 @@
+--- a/drivers/nvmem/u-boot-env.c
++++ b/drivers/nvmem/u-boot-env.c
+@@ -17,11 +17,13 @@ enum u_boot_env_format {
+ 	U_BOOT_FORMAT_SINGLE,
+ 	U_BOOT_FORMAT_REDUNDANT,
+ 	U_BOOT_FORMAT_BROADCOM,
++	U_BOOT_FORMAT_KEYVALUE,
+ };
+ 
+ struct u_boot_env {
+ 	struct device *dev;
+ 	enum u_boot_env_format format;
++	bool div_lf;
+ 
+ 	struct mtd_info *mtd;
+ 
+@@ -30,23 +32,41 @@ struct u_boot_env {
+ 	int ncells;
+ };
+ 
+-struct u_boot_env_image_single {
+-	__le32 crc32;
+-	uint8_t data[];
+-} __packed;
+-
+-struct u_boot_env_image_redundant {
+-	__le32 crc32;
+-	u8 mark;
+-	uint8_t data[];
+-} __packed;
+-
+-struct u_boot_env_image_broadcom {
+-	__le32 magic;
+-	__le32 len;
+-	__le32 crc32;
+-	uint8_t data[0];
+-} __packed;
++struct u_boot_env_image {
++	size_t crc32_ofs;
++	size_t crc32data_ofs;
++	size_t data_ofs;
++};
++
++/*
++ * u-boot-env:
++ *            0x0         0x4         0x8         0xC         0x10
++ *           +-----------+-----------+-----------+-----------+--
++ *    SINGLE |   CRC32   |               Data                   ...
++ *           +-----------+-----------+-----------+-----------+--
++ *                       |
++ *                       +------------- CRC32 Target ------------->
++ *
++ *            0x0         0x4         0x8         0xC         0x10
++ *           +-----------+--+--------+-----------+-----------+--
++ * REDUNDANT |   CRC32   |  |              Data                 ...
++ *           +-----------+--+--------+-----------+-----------+--
++ *                        ^ |0x5
++ *                     MARK |
++ *                          +------------ CRC32 Target ----------->
++ *
++ *            0x0         0x4         0x8         0xC         0x10
++ *           +-----------+-----------+-----------+-----------+--
++ *  BROADCOM |   Magic   |   Length  |   CRC32   |     Data     ...
++ *           +-----------+-----------+-----------+-----------+--
++ *                                               |
++ *                                               +- CRC32 Target ->
++ */
++static const struct u_boot_env_image u_boot_env_images[] = {
++	[U_BOOT_FORMAT_SINGLE]    = { 0x0, 0x4, 0x4 },
++	[U_BOOT_FORMAT_REDUNDANT] = { 0x0, 0x5, 0x5 },
++	[U_BOOT_FORMAT_BROADCOM]  = { 0x8, 0xc, 0xc },
++};
+ 
+ static int u_boot_env_read(void *context, unsigned int offset, void *val,
+ 			   size_t bytes)
+@@ -75,12 +95,19 @@ static int u_boot_env_add_cells(struct u
+ {
+ 	struct device *dev = priv->dev;
+ 	char *data = buf + data_offset;
+-	char *var, *value, *eq;
++	char *var, *divp, *value, *eq;
+ 	int idx;
+ 
+ 	priv->ncells = 0;
+-	for (var = data; var < data + data_len && *var; var += strlen(var) + 1)
+-		priv->ncells++;
++	for (var = data; var < data + data_len && *var; var = divp + 1) {
++		if (priv->div_lf) {
++			divp = strchrnul(var, '\n');
++			*divp = '\0';
++		} else {
++			divp = strchr(var, '\0');
++		}
++ 		priv->ncells++;
++	}
+ 
+ 	priv->cells = devm_kcalloc(dev, priv->ncells, sizeof(*priv->cells), GFP_KERNEL);
+ 	if (!priv->cells)
+@@ -109,16 +136,44 @@ static int u_boot_env_add_cells(struct u
+ 	return 0;
+ }
+ 
++static int keyvalue_env_check_dt(struct u_boot_env *priv, uint8_t *buf,
++				 size_t *offset)
++{
++	struct device_node *np = priv->dev->of_node;
++	u32 magic, magic_dt;
++	u32 offset_dt;
++	int err;
++
++	*offset = 0;
++	err = of_property_read_u32(np, "env,magic", &magic_dt);
++	if (!err) {
++		magic = le32_to_cpu(*(__le32 *)buf);
++		if (magic != magic_dt)
++			return -EINVAL;
++		*offset += sizeof(u32);
++	} else if (err != -EINVAL) {
++		return err;
++	}
++
++	err = of_property_read_u32(np, "env,data-offset", &offset_dt);
++	if (!err) {
++		if (offset_dt >= *offset && offset_dt < priv->mtd->size - 1)
++			*offset = offset_dt;
++		else
++			return -EINVAL;
++	} else if (err && err != -EINVAL)
++		return err;
++
++	priv->div_lf = of_property_read_bool(np, "env,divided-by-lf");
++
++	return 0;
++}
++
+ static int u_boot_env_parse(struct u_boot_env *priv)
+ {
+ 	struct device *dev = priv->dev;
+-	size_t crc32_data_offset;
+-	size_t crc32_data_len;
+-	size_t crc32_offset;
+-	size_t data_offset;
++	size_t data_offset = 0;
+ 	size_t data_len;
+-	uint32_t crc32;
+-	uint32_t calc;
+ 	size_t bytes;
+ 	uint8_t *buf;
+ 	int err;
+@@ -135,34 +190,35 @@ static int u_boot_env_parse(struct u_boo
+ 		goto err_kfree;
+ 	}
+ 
+-	switch (priv->format) {
+-	case U_BOOT_FORMAT_SINGLE:
+-		crc32_offset = offsetof(struct u_boot_env_image_single, crc32);
+-		crc32_data_offset = offsetof(struct u_boot_env_image_single, data);
+-		data_offset = offsetof(struct u_boot_env_image_single, data);
+-		break;
+-	case U_BOOT_FORMAT_REDUNDANT:
+-		crc32_offset = offsetof(struct u_boot_env_image_redundant, crc32);
+-		crc32_data_offset = offsetof(struct u_boot_env_image_redundant, data);
+-		data_offset = offsetof(struct u_boot_env_image_redundant, data);
+-		break;
+-	case U_BOOT_FORMAT_BROADCOM:
+-		crc32_offset = offsetof(struct u_boot_env_image_broadcom, crc32);
+-		crc32_data_offset = offsetof(struct u_boot_env_image_broadcom, data);
+-		data_offset = offsetof(struct u_boot_env_image_broadcom, data);
+-		break;
+-	}
+-	crc32 = le32_to_cpu(*(__le32 *)(buf + crc32_offset));
+-	crc32_data_len = priv->mtd->size - crc32_data_offset;
+-	data_len = priv->mtd->size - data_offset;
+-
+-	calc = le32_to_cpu((__le32)crc32(~0, buf + crc32_data_offset, crc32_data_len) ^ ~0L);
+-	if (calc != crc32) {
+-		dev_err(dev, "Invalid calculated CRC32: 0x%08x (expected: 0x%08x)\n", calc, crc32);
+-		err = -EINVAL;
+-		goto err_kfree;
++	if (priv->format == U_BOOT_FORMAT_KEYVALUE) {
++		err = keyvalue_env_check_dt(priv, buf, &data_offset);
++		if (err) {
++			dev_err(dev, "Invalid key-value environment data\n");
++			goto err_kfree;
++		}
++	} else {
++		struct u_boot_env_image image;
++		size_t crc32_data_len;
++		uint32_t crc32;
++		uint32_t calc;
++
++		image = u_boot_env_images[priv->format];
++		data_offset = image.data_ofs;
++
++		crc32 = le32_to_cpu(*(__le32 *)(buf + image.crc32_ofs));
++		crc32_data_len = priv->mtd->size - image.crc32data_ofs;
++		calc = crc32(~0, buf + image.crc32data_ofs, crc32_data_len) ^ ~0L;
++		calc = le32_to_cpu((__le32)calc);
++		if (calc != crc32) {
++			dev_err(priv->dev,
++				"Invalid calculated CRC32: 0x%08x (expected: 0x%08x)\n",
++				calc, crc32);
++			err = -EINVAL;
++			goto err_kfree;
++		}
+ 	}
+ 
++	data_len = priv->mtd->size - data_offset;
+ 	buf[priv->mtd->size - 1] = '\0';
+ 	err = u_boot_env_add_cells(priv, buf, data_offset, data_len);
+ 	if (err)
+@@ -217,6 +273,7 @@ static const struct of_device_id u_boot_
+ 	{ .compatible = "u-boot,env-redundant-bool", .data = (void *)U_BOOT_FORMAT_REDUNDANT, },
+ 	{ .compatible = "u-boot,env-redundant-count", .data = (void *)U_BOOT_FORMAT_REDUNDANT, },
+ 	{ .compatible = "brcm,env", .data = (void *)U_BOOT_FORMAT_BROADCOM, },
++	{ .compatible = "keyvalue,env", .data = (void *)U_BOOT_FORMAT_KEYVALUE, },
+ 	{},
+ };
+ 
