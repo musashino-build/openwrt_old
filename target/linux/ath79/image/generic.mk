@@ -1692,6 +1692,7 @@ define Device/nec_wg1400hp
   $(Device/nec-netbsd-aterm)
   SOC := qca9558
   DEVICE_MODEL := Aterm WG1400HP
+  NEC_BIN_NAME := TypeH040b
   IMAGE_SIZE := 16128k
   DEVICE_PACKAGES += kmod-i2c-gpio kmod-gpio-pca953x kmod-ath10k-ct \
 	ath10k-firmware-qca988x-ct
@@ -1715,6 +1716,7 @@ define Device/nec_wr8750n
   $(Device/nec-netbsd-aterm)
   SOC := ar9344
   DEVICE_MODEL := Aterm WR8750N
+  NEC_BIN_NAME := TypeH033a
   IMAGE_SIZE := 7936k
 endef
 TARGET_DEVICES += nec_wr8750n
