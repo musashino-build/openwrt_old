@@ -1,11 +1,14 @@
-define Build/nec-boot-header
+define Build/nec-data-header
+  $(eval hdrflags=$(word 1,$(1)))
+  $(eval hdrldaddr=$(if $(word 2,$(1)),$(word 2,$(1)),$(KERNEL_LOADADDR)))
   # padding image
   dd if=$@ of=$@.pad bs=4 conv=sync 2>/dev/null
   # add nec header
   ( \
-    nec_fw_size=$$(printf '%08x' "$$(($$(stat -c%s $@.pad) + 0x18))"); \
-    echo -ne $$(echo "0002FFFD$${nec_fw_size}00000018000000008006000080060000" | \
-      sed 's/../\\x&/g'); \
+    nec_fw_size="$$(($$(stat -c%s $@.pad) + 0x18))"; \
+    printf $$(printf "%08x%08x0000001800000000%08x%08x" \
+              $(hdrflags) $${nec_fw_size} $(hdrldaddr) $(hdrldaddr) | \
+              sed 's/../\\x&/g'); \
     dd if=$@.pad; \
   ) > $@
   # calcurate and add checksum
@@ -13,7 +16,7 @@ define Build/nec-boot-header
     cksum=$$( \
       dd if=$@ ibs=4 skip=1 | od -A n -t u2 --endian=little | tr -s ' ' '\n' | \
         awk '{s+=$$0}END{printf "%04x", 0xffff-(s%0x100000000)%0xffff}'); \
-    echo -ne "\x$${cksum:2:2}\x$${cksum:0:2}" | \
+    printf "\x$${cksum:2:2}\x$${cksum:0:2}" | \
       dd of=$@ conv=notrunc bs=2 seek=6 count=1; \
   )
   rm -f $@.pad
@@ -30,7 +33,7 @@ ifneq ($(CONFIG_TARGET_ROOTFS_INITRAMFS),)
   LOADER_TYPE := bin
   ARTIFACTS := initramfs-necimg.bin
   ARTIFACT/initramfs-necimg.bin := append-image initramfs-kernel.bin | \
-    remove-uimage-header | loader-kernel | nec-boot-header
+	remove-uimage-header | loader-kernel | nec-data-header 0x0002fffd
   DEVICE_PACKAGES := kmod-usb2
 endif
 endef
