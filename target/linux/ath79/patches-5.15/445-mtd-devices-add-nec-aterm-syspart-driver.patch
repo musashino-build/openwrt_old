@@ -1,0 +1,29 @@
+--- a/drivers/mtd/devices/Kconfig
++++ b/drivers/mtd/devices/Kconfig
+@@ -214,6 +214,16 @@ config MTD_ST_SPI_FSM
+ 	  SPI Fast Sequence Mode (FSM) Serial Flash Controller and support
+ 	  for a subset of connected Serial Flash devices.
+ 
++config MTD_NEC_SYSPART
++	tristate "System Partition on NetBSD-based NEC Aterm"
++	depends on ATH79
++	depends on MTD_OF_PARTS
++	help
++	  This provides a support for system partition on NetBSD-based
++	  NEC Aterm series device.
++	  The partition has a simple filesystem and handle it as a mtd
++	  device via this driver.
++
+ if MTD_DOCG3
+ config BCH_CONST_M
+ 	default 14
+--- a/drivers/mtd/devices/Makefile
++++ b/drivers/mtd/devices/Makefile
+@@ -19,6 +19,7 @@ obj-$(CONFIG_MTD_SST25L)	+= sst25l.o
+ obj-$(CONFIG_MTD_BCM47XXSFLASH)	+= bcm47xxsflash.o
+ obj-$(CONFIG_MTD_ST_SPI_FSM)    += st_spi_fsm.o
+ obj-$(CONFIG_MTD_POWERNV_FLASH)	+= powernv_flash.o
++obj-$(CONFIG_MTD_NEC_SYSPART)		+= nec_syspart.o
+ 
+ 
+ CFLAGS_docg3.o			+= -I$(src)
