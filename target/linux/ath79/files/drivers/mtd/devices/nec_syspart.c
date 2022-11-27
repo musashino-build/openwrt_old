@@ -14,9 +14,9 @@
 #include <linux/mtd/mtd.h>
 #include <linux/mtd/partitions.h>
 
-//#define NEC_BLOCKSIZE		0xffc0
 #define NEC_BLKHDR_LEN		0x40
 #define NEC_BLKHDR_MAGIC	0x30534654 /* "0SFT" */
+#define NEC_MAX_IMAGES		4
 
 struct nec_block_header {
 	char name[16];
@@ -28,25 +28,20 @@ struct nec_block_header {
 
 struct nec_syspart {
 	struct mtd_info mtd;
-	uint32_t p_bs;	/* parent blocksize */
-	uint32_t c_bs;	/* child blocksize */
-	int nblk;	/* total blocks */
-	int nblk_u;	/* using blocks */
+	struct mtd_info *parent;
+	uint32_t p_bs;		/* parent blocksize */
+	uint32_t c_bs;		/* child blocksize */
+	int nblk;		/* total blocks */
+	int nblk_u;		/* using blocks */
 };
 
 static int offset_to_block(struct nec_syspart *sysp, loff_t offset,
 			   uint32_t *boffset)
 {
-	int i;
-
 	if (offset > sysp->mtd.size)
 		return -EINVAL;
 
-	i = (int)div_s64_rem(offset, sysp->c_bs, boffset);
-	if (boffset > 0)
-		i++;
-
-	return i;
+	return (int)div_s64_rem(offset, sysp->c_bs, boffset);
 }
 
 static int nec_syspart_read(struct mtd_info *mtd, loff_t from, size_t len,
@@ -64,15 +59,15 @@ static int nec_syspart_read(struct mtd_info *mtd, loff_t from, size_t len,
 	i = startblk;
 
 	if (startblk < 0)
-		return -EINVAL;
+		return startblk;
 
 	while (len > 0) {
 		rlen = (len > rlen_max) ? rlen_max : len;
 		roff = sysp->p_bs * i
 			+ NEC_BLKHDR_LEN
-			+ (i == startblk) ? nec_boffset : 0;
+			+ ((i == startblk) ? nec_boffset : 0);
 
-		ret = mtd_read(sysp->mtd.parent, roff, rlen, &read, buf);
+		ret = mtd_read(sysp->parent, roff, rlen, &read, buf);
 		if (ret)
 			return ret;
 		else if (read != rlen)
@@ -104,15 +99,15 @@ static int nec_syspart_write(struct mtd_info *mtd, loff_t to, size_t len,
 	i = startblk;
 
 	if (startblk < 0)
-		return -EINVAL;
+		return startblk;
 
 	while (len > 0) {
 		wlen = (len > wlen_max) ? wlen_max : len;
 		woff = sysp->p_bs * i
 			+ NEC_BLKHDR_LEN
-			+ (i == startblk) ? nec_boffset : 0;
+			+ ((i == startblk) ? nec_boffset : 0);
 
-		ret = mtd_write(sysp->mtd.parent, woff, wlen, &written, buf);
+		ret = mtd_write(sysp->parent, woff, wlen, &written, buf);
 		if (ret)
 			return ret;
 		else if (written != wlen)
@@ -129,15 +124,21 @@ static int nec_syspart_write(struct mtd_info *mtd, loff_t to, size_t len,
 	return 0;
 }
 
-static int nec_syspart_parse_parts(struct nec_syspart *sysp)
+static int nec_syspart_parse_parts(struct nec_syspart *sysp,
+				   struct mtd_partition *parts)
 {
-	struct mtd_info *pmtd = sysp->mtd.parent;
+	struct mtd_info *pmtd = sysp->parent;
 	struct nec_block_header header;
 	u_char buf[NEC_BLKHDR_LEN];
-	int i, ret;
+	int i = 0, ret, nr_parts = 0;
 	size_t read;
 
-	for (i = 0; i < sysp->nblk; i++) {
+	while (i < sysp->nblk) {
+		if (nr_parts >= NEC_MAX_IMAGES) {
+			pr_warn("exceeds maximum partitions number (>4)\n");
+			break;
+		}
+
 		ret = mtd_read(pmtd, (loff_t)(i * sysp->p_bs), NEC_BLKHDR_LEN,
 			       &read, buf);
 		if (ret)
@@ -148,13 +149,23 @@ static int nec_syspart_parse_parts(struct nec_syspart *sysp)
 		memcpy(&header, buf, NEC_BLKHDR_LEN);
 		if (header.magic != NEC_BLKHDR_MAGIC)
 			break;
-		pr_info("name-> \"%s\", len-> 0x%08x (%u bytes), index-> %u\n",
-			header.name, header.dlen, header.dlen, header.blkidx);
+
+		parts[nr_parts].name = kstrdup(header.name, GFP_KERNEL);
+		parts[nr_parts].offset = i * sysp->c_bs;
+		parts[nr_parts].size = header.dlen;
+		parts[nr_parts].of_node
+			= of_find_node_by_name(mtd_get_of_node(&sysp->mtd),
+					       header.name);
+
+		nr_parts++;
+		i += header.dlen / sysp->c_bs;
+		if (header.dlen % sysp->c_bs)
+			i++;
 	}
 
 	sysp->nblk_u = i;
 
-	return 0;
+	return nr_parts;
 }
 
 static int nec_syspart_probe(struct platform_device *pdev)
@@ -162,18 +173,15 @@ static int nec_syspart_probe(struct platform_device *pdev)
 	struct device *dev = &pdev->dev;
 	struct device_node *np = dev->of_node;
 	struct mtd_info *pmtd;
+	struct mtd_partition parts[NEC_MAX_IMAGES];
 	struct nec_syspart *sysp;
 	int ret;
 
 	pmtd = of_get_mtd_device_by_node(np);
-	if (IS_ERR(pmtd)) {
-		dev_err(dev, "failed to get parent mtd device\n");
+	if (IS_ERR(pmtd))
 		return PTR_ERR(pmtd);
-	}
 
-	dev_info(dev, "got parent mtd: name-> \"%s\", erasefize-> 0x%08x,"
-		      " writesize-> 0x%08x\n",
-		 pmtd->name, pmtd->erasesize, pmtd->writesize);
+	dev_info(dev, "got parent mtd: \"%s\"\n", pmtd->name);
 
 	if (!mtd_is_partition(pmtd)) {
 		dev_err(dev, "parent mtd is not a partition\n");
@@ -187,14 +195,15 @@ static int nec_syspart_probe(struct platform_device *pdev)
 	sysp->p_bs = pmtd->erasesize;
 	sysp->c_bs = pmtd->erasesize - NEC_BLKHDR_LEN;
 	sysp->nblk = div_u64(pmtd->size, pmtd->erasesize);
+	sysp->parent = pmtd;
 
 	sysp->mtd.priv = sysp;
 	sysp->mtd.dev.parent = dev;
-	sysp->mtd.parent = pmtd;
 	sysp->mtd.name = "nec-system";
+	mtd_set_of_node(&sysp->mtd, np);
 
 	sysp->mtd.type = MTD_DATAFLASH;
-	sysp->mtd.flags = MTD_CAP_NORFLASH;
+	sysp->mtd.flags = MTD_CAP_RAM;
 	sysp->mtd.size = sysp->nblk * sysp->c_bs;
 	sysp->mtd.erasesize = sysp->c_bs;
 	sysp->mtd.writesize = 1;
@@ -204,13 +213,14 @@ static int nec_syspart_probe(struct platform_device *pdev)
 	sysp->mtd._write = nec_syspart_write;
 	sysp->mtd._read = nec_syspart_read;
 
-	ret = nec_syspart_parse_parts(sysp);
-	if (ret)
+	memset(parts, 0, sizeof(parts[0]) * NEC_MAX_IMAGES);
+	ret = nec_syspart_parse_parts(sysp, parts);
+	if (ret < 0)
 		return ret;
 
-	dev_info(dev, "using %u blocks in parent mtd\n", sysp->nblk_u);
+	dev_info(dev, "using %u blocks\n", sysp->nblk_u);
 
-	return 0;
+	return mtd_device_register(&sysp->mtd, parts, ret);
 }
 
 static int nec_syspart_remove(struct platform_device *pdev)
