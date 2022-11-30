@@ -44,6 +44,54 @@ static int offset_to_block(struct nec_syspart *sysp, loff_t offset,
 	return (int)div_s64_rem(offset, sysp->c_bs, boffset);
 }
 
+static int nec_syspart_erase(struct mtd_info *mtd, struct erase_info *erase)
+{
+	struct nec_syspart *sysp = mtd->priv;
+	struct erase_info perase;
+	u_char buf[NEC_BLKHDR_LEN];
+	uint64_t lastlen;
+	uint32_t rem;
+	size_t rwlen;
+	int startblk;
+	int i, ret;
+
+	pr_info("%s: 0x%08llx:0x%08llx\n", __func__, erase->addr, erase->len);
+
+	i = startblk = offset_to_block(sysp, (loff_t)erase->addr, &rem);
+	if (rem)
+		return -EIO;
+	lastlen = div_u64(erase->len, sysp->c_bs);
+
+	while (erase->len > 0) {
+		perase.addr = sysp->p_bs * i;
+		perase.len = sysp->p_bs;
+		erase->fail_addr = sysp->c_bs * i;
+
+		ret = mtd_read(sysp->parent,
+			       (loff_t)perase.addr, NEC_BLKHDR_LEN, &rwlen, buf);
+		if (ret)
+			return ret;
+		if (rwlen != NEC_BLKHDR_LEN)
+			return -EIO;
+
+		ret = mtd_erase(sysp->parent, &perase);
+		if (ret)
+			return ret;
+
+		ret = mtd_write(sysp->parent,
+				(loff_t)perase.addr, NEC_BLKHDR_LEN, &rwlen, buf);
+		if (ret)
+			return ret;
+		if (rwlen != NEC_BLKHDR_LEN)
+			return -EIO;
+
+		erase->len -= sysp->c_bs;
+		i++;
+	}
+
+	return 0;
+}
+
 static int nec_syspart_read(struct mtd_info *mtd, loff_t from, size_t len,
 			    size_t *retlen, u_char *buf)
 {
@@ -203,13 +251,13 @@ static int nec_syspart_probe(struct platform_device *pdev)
 	mtd_set_of_node(&sysp->mtd, np);
 
 	sysp->mtd.type = MTD_DATAFLASH;
-	sysp->mtd.flags = MTD_CAP_RAM;
+	sysp->mtd.flags = MTD_CAP_NORFLASH;
 	sysp->mtd.size = sysp->nblk * sysp->c_bs;
 	sysp->mtd.erasesize = sysp->c_bs;
 	sysp->mtd.writesize = 1;
 	sysp->mtd.writebufsize = 1;
 
-//TBD	sysp->_erase = nec_syspart_erase;
+	sysp->mtd._erase = nec_syspart_erase;
 	sysp->mtd._write = nec_syspart_write;
 	sysp->mtd._read = nec_syspart_read;
 
