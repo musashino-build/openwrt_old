@@ -14,7 +14,8 @@
 		reg = <0x040000 0x7c0000>;
 
 		Firmware {
-
+			compatible = "openwrt,uimage", "denx,uimage";
+			openwrt,offset = <0xffc0>;
 		};
 	};
 };
