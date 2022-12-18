@@ -81,16 +81,12 @@ define Build/nec-pad-rootfs
   printf "\xde\xad\xc0\xde" >> $@
 endef
 
-define Build/remove-uimage-header
-  dd if=$@ of=$@.new iflag=skip_bytes skip=64 2>/dev/null
-  mv $@.new $@
-endef
-
 define Device/nec-netbsd-aterm
   DEVICE_VENDOR := NEC
   BLOCKSIZE := 65472
   LOADER_TYPE := bin
-  LOADER_FLASH_OFFS := 0x40000
+  KERNEL := kernel-bin | append-dtb | lzma | loader-kernel | \
+	nec-data-header 0x0002fffd
   KERNEL_INITRAMFS := kernel-bin | append-dtb | lzma | loader-kernel | \
 	nec-data-header 0x0002fffd
   COMPILE := infoblock-$(1).bin loader-$(1).bin endblock-$(1).bin
@@ -101,18 +97,14 @@ define Device/nec-netbsd-aterm
   COMPILE/loader-$(1).bin := loader-okli-compile | nec-data-header 0x0002fffd
   COMPILE/endblock-$(1).bin := nec-null-bin | nec-data-header 0x0001fffe
   IMAGES += full.bin loader.bin
-  IMAGE/full.bin := \
-	nec-bsdfw $(KDIR)/infoblock-$(1).bin bin/nec_aterm_dummy_tp.bin \
-		$(KDIR)/loader-$(1).bin $(KDIR)/endblock-$(1).bin | \
+  IMAGE/full.bin := append-kernel | \
+	nec-bsdfw bin/wr8750n_1_0_9_tp.bin $$$$@ $(KDIR)/endblock-$(1).bin | \
 	pad-to $$$$(BLOCKSIZE) | \
-	append-kernel | pad-to $$$$(BLOCKSIZE) | \
 	append-rootfs | nec-pad-rootfs | check-size | pad-to $$$$(IMAGE_SIZE) | \
 	nec-bootfs
-  IMAGE/sysupgrade.bin := \
-	nec-bsdfw $(KDIR)/infoblock-$(1).bin bin/nec_aterm_dummy_tp.bin \
-		$(KDIR)/loader-$(1).bin $(KDIR)/endblock-$(1).bin | \
+  IMAGE/sysupgrade.bin := append-kernel | \
+	nec-bsdfw bin/wr8750n_1_0_9_tp.bin $$$$@ $(KDIR)/endblock-$(1).bin | \
 	pad-to $$$$(BLOCKSIZE) | \
-	append-kernel | pad-to $$$$(BLOCKSIZE) | \
 	append-rootfs | nec-pad-rootfs | check-size | append-metadata
   IMAGE/loader.bin := \
 	nec-bsdfw $(KDIR)/infoblock-$(1).bin bin/nec_aterm_dummy_tp.bin \
