@@ -135,6 +135,32 @@
 		los-gpio = <&gpio1 14 GPIO_ACTIVE_HIGH>;
 		mod-def0-gpio = <&gpio1 13 GPIO_ACTIVE_LOW>;
 	};
+
+	mtd-firmware {
+		compatible = "mtd-concat";
+		devices = <&firmware>;
+
+		partitions {
+			compatible = "openwrt,uimage", "denx,uimage";
+			openwrt,ih-magic = <0x12345000>;
+			openwrt,boot-index-ascii = "1";
+			nvmem-cells = <&image_id>;
+			nvmem-cell-names = "bootindex";
+		};
+	};
+
+	mtd-firmware2 {
+		compatible = "mtd-concat";
+		devices = <&firmware2>;
+
+		partitions {
+			compatible = "openwrt,uimage", "denx,uimage";
+			openwrt,ih-magic = <0x12345000>;
+			openwrt,boot-index-ascii = "2";
+			nvmem-cells = <&image_id>;
+			nvmem-cell-names = "bootindex";
+		};
+	};
 };
 
 &gpio0 {
@@ -171,18 +197,19 @@
 			};
 
 			partition@c0000 {
+				compatible = "u-boot,env";
 				label = "u-boot-env2";
 				reg = <0xc0000 0x40000>;
+
+				image_id: Image_Id {};
 			};
 
-			partition@100000 {
-				compatible = "openwrt,uimage", "denx,uimage";
+			firmware: partition@100000 {
 				label = "firmware";
 				reg = <0x100000 0xe80000>;
-				openwrt,ih-magic = <0x12345000>;
 			};
 
-			partition@f80000 {
+			firmware2: partition@f80000 {
 				label = "firmware2";
 				reg = <0xf80000 0xe80000>;
 			};
