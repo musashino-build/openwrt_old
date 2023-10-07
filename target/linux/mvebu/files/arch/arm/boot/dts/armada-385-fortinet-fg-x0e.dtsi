@@ -295,25 +295,15 @@
 			};
 
 			partition@200000 {
-				reg = <0x200000 0x600000>;
-				label = "kernel";
-			};
-
-			partition@800000 {
-				reg = <0x800000 0x1800000>;
-				label = "rootfs";
+				compatible = "fortinet,fortigate-firmware";
+				reg = <0x200000 0x1e00000>;
+				label = "firmware";
 			};
 
 			partition@2000000 {
-				reg = <0x2000000 0x600000>;
-				label = "kn2";
-				read-only;
-			};
-
-			partition@2600000 {
-				reg = <0x2600000 0x1800000>;
-				label = "rfs2";
-				read-only;
+				compatible = "fortinet,fortigate-firmware";
+				reg = <0x2000000 0x1e00000>;
+				label = "firmware2";
 			};
 
 			partition@3e00000 {
